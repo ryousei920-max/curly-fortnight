@@ -21,7 +21,9 @@ button:disabled{opacity:.5}
 #stage{position:relative;background:#000;border-radius:14px;overflow:hidden;display:none}
 #stage canvas{width:100%;display:block}
 #status{position:absolute;left:10px;top:10px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;font-weight:700}
-#status.ready{color:var(--accent)}#status.wait{color:var(--sub)}#status.busy{color:var(--warn)}
+#status.ready{color:var(--accent)}
+#guide{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%);color:#fff;font-size:22px;font-weight:800;line-height:1.45;text-align:center;display:none}
+#guide small{display:block;font-size:44px;color:var(--accent);line-height:1.1}#status.wait{color:var(--sub)}#status.busy{color:var(--warn)}
 .res h3{margin:0 0 8px;font-size:16px}
 .res ul{margin:6px 0 0;padding-left:18px}
 details{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
@@ -53,6 +55,8 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     <label for="quality">解析の細かさ</label>
     <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select>
     <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。スマホを置いたら、近く(1〜2m)でカメラに手のひらを見せるとスタート。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。続けて打つときは合図なしでOK。1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</p>
+    <label for="camSwing">カメラ</label>
+    <select id="camSwing"><option value="environment">外カメ(画質が良い・おすすめ)</option><option value="user">インカメ(画面を見ながら使える)</option></select>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="startCam">カメラで開始</button>
       <button id="pickFile">動画を分析</button>
@@ -69,6 +73,8 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
       <option value="前傾">② 前傾の深さ(アドレスの向きで、股関節からお辞儀)</option>
       <option value="腕">③ 腕の上がり方(アドレスの向きで、両腕を頭の上へ)</option>
     </select>
+    <label for="camBody">カメラ</label>
+    <select id="camBody"><option value="user">インカメ(画面の指示を見ながら測れる・おすすめ)</option><option value="environment">外カメ</option></select>
     <label style="display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text)"><input type="checkbox" id="bodyBase" style="width:auto"> 基準として保存する(家などで落ち着いて測るとき)</label>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="bodyCam">カメラで測る</button>
@@ -78,7 +84,7 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     <div id="bodyBaseView" class="note" style="margin-top:8px"></div>
   </div>
 
-  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div></div>
+  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div><div id="guide"></div></div>
   <div class="row" id="ctrl" style="display:none;margin-top:10px"><button id="stop">終了</button></div>
 
   <div id="results"></div>
@@ -382,12 +388,21 @@ function bodyOk(lms){
 function landmarks(r){ const ok=r&&bodyOk(r.poseLandmarks); return {img: ok? toArr(r.poseLandmarks):null, world: ok? toArr(r.poseWorldLandmarks):null}; }
 
 const cv=$("cv"), ctx=cv.getContext("2d");
+let mirror=false;  // インカメのときは鏡のように左右反転して表示(分析には影響しない)
+async function openCamera(facing){
+  mirror = facing==="user";
+  const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:false});
+  return s;
+}
+function setGuide(text,big){ const g=$("guide"); if(!text){ g.style.display="none"; return; } g.style.display="block"; g.innerHTML=(big!==undefined? `<small>${big}</small>`:"")+text; }
 function draw(src,lms,status){
   const w=src.videoWidth||src.width, h=src.videoHeight||src.height; if(!w) return;
   if(cv.width!==w){ cv.width=w; cv.height=h; }
+  ctx.save(); if(mirror){ ctx.translate(w,0); ctx.scale(-1,1); }
   ctx.drawImage(src,0,0,w,h);
   if(lms){ ctx.lineWidth=Math.max(2,w/240); ctx.strokeStyle="#4ade80";
     for(const [a,b] of BONES){ ctx.beginPath(); ctx.moveTo(lms[a][0]*w,lms[a][1]*h); ctx.lineTo(lms[b][0]*w,lms[b][1]*h); ctx.stroke(); } }
+  ctx.restore();
 }
 function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className=cls; }
 
@@ -501,7 +516,7 @@ async function startCamera(){
   $("setup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   setStatus("カメラを準備中…","wait");
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:720},height:{ideal:1280}},audio:false});
+    stream=await openCamera($("camSwing").value);
   }catch(e){ setStatus("カメラを使えませんでした","wait"); alert("カメラを使えませんでした。ブラウザの設定でカメラを許可してください。("+e.message+")"); return; }
   const v=$("vid"); v.srcObject=stream; await v.play();
   setStatus("姿勢推定を準備中…","wait");
@@ -646,12 +661,12 @@ async function bodyCamera(){
   speak("体チェックを始めます");
   $("setup").style.display="none"; $("bodySetup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:720},height:{ideal:1280}},audio:false});
+    stream=await openCamera($("camBody").value);
     const v=$("vid"); v.srcObject=stream; await v.play();
-    setStatus("姿勢推定を準備中…","wait"); await initPose();
+    setStatus("姿勢推定を準備中…","wait"); setGuide("準備中…"); await initPose();
     running=true;
     const rec=[]; const t0=performance.now(); let readySince=null, phase="wait", stepAt=0, si=0;
-    speak(G.ready); setStatus("全身が映るように立ってください","wait");
+    speak(G.ready); setStatus("全身が映るように立ってください","wait"); setGuide(G.ready);
     await new Promise((done,ng)=>{
       const loop=async()=>{
         if(!running){ ng(new Error("中止しました")); return; }
@@ -662,23 +677,25 @@ async function bodyCamera(){
           let ok=!!L.img;
           if(ok && G.facing){ const f=aspect([L.img],v.videoWidth/v.videoHeight)[0]; const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP);
             ok=Math.abs(f[L_SH][0]-f[R_SH][0])/Math.hypot(sh[0]-hp[0],sh[1]-hp[1])>=0.45; }
-          if(ok){ readySince=readySince??t; if(t-readySince>1200){ phase="run"; stepAt=t; speak(G.steps[0][1]); setStatus("測定中","busy"); } }
-          else { readySince=null; }
+          if(ok){ readySince=readySince??t; setGuide("そのまま止まってください","OK!");
+            if(t-readySince>1200){ phase="run"; stepAt=t; speak(G.steps[0][1]); setStatus("測定中","busy"); } }
+          else { readySince=null; setGuide(L.img? (G.facing? "カメラに胸を向けてください" : G.ready) : "頭から足まで映るように、少し離れてください"); }
         } else {
           rec.push({t,img:L.img,world:L.world});
+          setGuide(G.steps[si][1], Math.max(1,Math.ceil((G.steps[si][0]-(t-stepAt))/1000)));
           if(t-stepAt>G.steps[si][0]){ si++; stepAt=t; if(si>=G.steps.length){ done(); return; } speak(G.steps[si][1]); }
         }
         requestAnimationFrame(loop);
       };
       loop();
     });
-    running=false; stream.getTracks().forEach(x=>x.stop());
+    running=false; stream.getTracks().forEach(x=>x.stop()); setGuide("");
     const fps=rec.length/((rec[rec.length-1].t-rec[0].t)/1000||1);
     const img=fillSmooth(rec.map(f=>f.img)), world=fillSmooth(rec.map(f=>f.world));
     if(!img || rec.filter(f=>f.img).length<0.5*rec.length) throw new Error("途中で体が映らなくなりました。全身が入るように立ってください。");
     finishBody(kind,measureBody(kind,img,world,fps,v.videoWidth/v.videoHeight));
     setStatus("体チェックが終わりました","ready");
-  }catch(e){ running=false; if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
+  }catch(e){ running=false; setGuide(""); if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
   $("setup").style.display="block"; $("bodySetup").style.display="block"; $("ctrl").style.display="none"; window.analysisDone=true;
 }
 
@@ -697,6 +714,7 @@ function resample(raw,fps,dur){
 }
 // 動画ファイルから、1秒30コマぶんの関節を取り出す
 async function collectFrames(file){
+  mirror=false; setGuide("");
   const v=$("vid"); v.srcObject=null; v.src=URL.createObjectURL(file); v.load();
   setStatus("動画を読み込み中…","wait");
   await withTimeout(new Promise(r=>{ if(v.readyState>=2) r(); else v.onloadeddata=()=>r(); }), 20000, "動画を読み込めませんでした。別の動画で試してください。");
