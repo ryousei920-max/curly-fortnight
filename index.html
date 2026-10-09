@@ -362,7 +362,7 @@ function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className=cls
 // ---------------------------------------------------------------- 手のひらの合図
 // 手のひらをカメラに向けて、指を開いて上に向けた状態を「スタートの合図」にする。
 // 手の向き(手のひらか手の甲か)は、左右どちらの手かと、親指側・小指側の位置関係から判断する。
-// ※手の検出は「鏡に映った画像」を前提に左右を返すので、背面カメラ(鏡写しでない)では左右が逆になる。
+// ※iPhoneの背面カメラで試したところ、手の甲で反応したため、左右の扱いを反転(mirrored=true)にしている。
 let hands=null, lastHands=null;
 async function initHands(){
   if(hands) return hands;
@@ -486,7 +486,7 @@ async function startCamera(){
     if(!live.active){
       // 手のひら待ちの間は、手の検出だけを動かす(電池と処理の節約)
       if(n++%2===0){ await hands.send({image:v}); const r=lastHands; let seen=false;
-        if(r&&r.multiHandLandmarks) r.multiHandLandmarks.forEach((lm,i)=>{ const lab=r.multiHandedness?.[i]?.label; if(isPalm(lm,lab,false)) seen=true; });
+        if(r&&r.multiHandLandmarks) r.multiHandLandmarks.forEach((lm,i)=>{ const lab=r.multiHandedness?.[i]?.label; if(isPalm(lm,lab,true)) seen=true; });
         live.palm(t,seen);
         if(seen && !live.active) setStatus("手のひらを確認中…","busy");
         else if(!live.active) setStatus("手のひらを見せるとスタート","wait"); }
