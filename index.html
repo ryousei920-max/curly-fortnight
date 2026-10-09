@@ -81,11 +81,15 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
       <button id="bodyFileBtn">動画で測る</button>
     </div>
     <input type="file" id="bodyFile" accept="video/*" hidden>
+    <div style="margin-top:10px;background:#0b110e;border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center">
+      <canvas id="demo" width="320" height="240" style="width:100%;max-width:320px"></canvas>
+      <div id="demoText" class="note" style="text-align:left"></div>
+    </div>
     <div id="bodyBaseView" class="note" style="margin-top:8px"></div>
   </div>
 
-  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div><div id="guide"></div></div>
-  <div class="row" id="ctrl" style="display:none;margin-top:10px"><button id="stop">終了</button></div>
+  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div><div id="guide"></div><canvas id="demoMini" width="160" height="120" style="position:absolute;right:8px;top:8px;width:160px;height:120px;border-radius:10px;background:rgba(11,17,14,.85);border:1px solid var(--line);display:none"></canvas></div>
+  <div class="row" id="ctrl" style="display:none;margin-top:10px"><button id="flip">カメラ切替(イン⇔外)</button><button id="stop">終了</button></div>
 
   <div id="results"></div>
   <div class="card"><small>数値はスマホ1台の映像からの推定です。ストレッチは反動をつけず、痛みの出ない範囲で行ってください。</small>
@@ -314,7 +318,15 @@ function proRows(m){
 let voice=null;
 function pickVoice(){ const vs=speechSynthesis.getVoices(); voice=vs.find(v=>/ja(-|_)JP/i.test(v.lang))||vs.find(v=>/^ja/i.test(v.lang))||null; }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-function speak(text){ log("SPEAK:",text); if(!("speechSynthesis" in window)) return; const u=new SpeechSynthesisUtterance(text); u.lang="ja-JP"; if(voice) u.voice=voice; u.rate=1.05; speechSynthesis.speak(u); }
+function speak(text,rate){ log("SPEAK:",text);
+  // しゃべり終わったら解決する(音声が使えない環境では、文字数からおおよその時間で解決)
+  const est=new Promise(r=>setTimeout(r, Math.min(9000, 400+text.length*(window.FAST_SPEECH?5:140))));
+  if(!("speechSynthesis" in window)) return est;
+  const u=new SpeechSynthesisUtterance(text); u.lang="ja-JP"; if(voice) u.voice=voice; u.rate=rate||1.05;
+  const end=new Promise(r=>{ u.onend=r; u.onerror=r; });
+  speechSynthesis.speak(u);
+  return Promise.race([end, new Promise(r=>setTimeout(r, Math.min(15000, 1500+text.length*250)))]);
+}
 
 // ---------------------------------------------------------------- 1本分の分析
 function analyzeSwing(img,world,fps,ratio,lo,hi,no){
@@ -390,10 +402,30 @@ function landmarks(r){ const ok=r&&bodyOk(r.poseLandmarks); return {img: ok? toA
 const cv=$("cv"), ctx=cv.getContext("2d");
 let mirror=false;  // インカメのときは鏡のように左右反転して表示(分析には影響しない)
 async function openCamera(facing){
-  mirror = facing==="user";
+  mirror = facing==="user"; curFacing=facing;
   const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:false});
   return s;
 }
+let curFacing="environment", curSel=null, switching=false;
+const frameReady=v=>!switching && v.readyState>=2 && v.videoWidth>0;   // 切り替え中など、映像がないときは解析しない
+async function flipCamera(){
+  if(!stream) return;
+  const next= curFacing==="user"? "environment" : "user";
+  try{
+    switching=true;
+    await new Promise(r=>setTimeout(r,120));   // 解析中のコマが終わるのを待つ
+    const ns=await openCamera(next);
+    stream.getTracks().forEach(x=>x.stop()); stream=ns;
+    const v=$("vid"); v.srcObject=ns; await v.play();
+    await new Promise(r=>{ const ok=()=>v.videoWidth>0; if(ok()) r(); else v.onloadeddata=()=>r(); });
+    switching=false;
+    if(curSel){ $(curSel).value=next; saveCamPrefs(); }
+    if(live) live.ratio=v.videoWidth/v.videoHeight;
+    speak(next==="user"? "インカメに切り替えました" : "外カメに切り替えました");
+  }catch(e){ switching=false; speak("カメラを切り替えられませんでした"); mirror= curFacing==="user"; }
+}
+function saveCamPrefs(){ try{ localStorage.setItem("camPrefs",JSON.stringify({swing:$("camSwing").value,body:$("camBody").value})); }catch(e){} }
+function loadCamPrefs(){ try{ const p=JSON.parse(localStorage.getItem("camPrefs")||"{}"); if(p.swing) $("camSwing").value=p.swing; if(p.body) $("camBody").value=p.body; }catch(e){} }
 function setGuide(text,big){ const g=$("guide"); if(!text){ g.style.display="none"; return; } g.style.display="block"; g.innerHTML=(big!==undefined? `<small>${big}</small>`:"")+text; }
 function draw(src,lms,status){
   const w=src.videoWidth||src.width, h=src.videoHeight||src.height; if(!w) return;
@@ -516,7 +548,7 @@ async function startCamera(){
   $("setup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   setStatus("カメラを準備中…","wait");
   try{
-    stream=await openCamera($("camSwing").value);
+    curSel="camSwing"; stream=await openCamera($("camSwing").value);
   }catch(e){ setStatus("カメラを使えませんでした","wait"); alert("カメラを使えませんでした。ブラウザの設定でカメラを許可してください。("+e.message+")"); return; }
   const v=$("vid"); v.srcObject=stream; await v.play();
   setStatus("姿勢推定を準備中…","wait");
@@ -529,6 +561,7 @@ async function startCamera(){
   speak("準備ができました。スマホを置いたら、カメラに手のひらを見せてください。");
   let n=0;
   const loop=async()=>{ if(!running) return;
+    if(!frameReady(v)){ requestAnimationFrame(loop); return; }
     const t=performance.now();
     if(!live.active){
       // 手のひら待ちの間は、手の検出だけを動かす(電池と処理の節約)
@@ -648,54 +681,191 @@ async function bodyFromFile(file){
   $("setup").style.display="block"; $("bodySetup").style.display="block"; window.analysisDone=true;
 }
 // カメラで測る: 音声で順番に案内しながら記録する
+// tag: base=正面の基準 / right=右ひねりで止める / left=左ひねりで止める / max=一番深い所で止める
+// 体の動きを見て進める案内。
+// type: base=正面などで静止 / go=目いっぱい動かして止める(止まったのを確認したら次へ) / back=元に戻る
 const GUIDE={
-  捻転:{ready:"カメラに胸を向けて、全身が映るように立ってください。", facing:true,
-    steps:[[1500,"そのまま正面で止まってください。"],[2500,"右へ、目いっぱいひねって、止めてください。"],[4000,"正面に戻ってください。"],[2000,"左へ、目いっぱいひねって、止めてください。"],[4000,"正面に戻ってください。"]]},
-  前傾:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false,
-    steps:[[1500,"ひざを軽く曲げて、背すじを伸ばしたまま、股関節から目いっぱいお辞儀して、止めてください。"],[5000,"ゆっくり戻ってください。"]]},
-  腕:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false,
-    steps:[[1500,"両腕を前から、頭の上まで目いっぱい上げて、止めてください。"],[5000,"腕を下ろしてください。"]]},
+  捻転:{ready:"カメラに胸を向けて、全身が映るように立ってください。", facing:true, goMin:15, backMax:10,
+    how:"カメラに胸を向けて立ち、腕を胸の前で組みます。足は動かさず、上半身だけを右へ目いっぱいひねって止める → 正面に戻る → 左へ目いっぱいひねって止める。自分のペースでOK。止まったのを確認してから次の案内が出ます。",
+    steps:[{type:"base",t:"腕を胸の前で組んで、正面を向いて止まってください。",tag:"base"},
+           {type:"go",t:"足は動かさずに、右へ目いっぱいひねって、そのまま止めてください。",tag:"right"},
+           {type:"back",t:"はい、オーケーです。正面に戻ってください。"},
+           {type:"go",t:"今度は左へ、目いっぱいひねって、そのまま止めてください。",tag:"left"},
+           {type:"back",t:"はい、オーケーです。正面に戻ってください。"}]},
+  前傾:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false, goMin:20, backMax:12,
+    how:"いつものアドレスの向き(カメラに体の横を向ける)で立ちます。ひざを軽く曲げ、背すじをまっすぐ伸ばしたまま、股関節から目いっぱいお辞儀して止めます。背中が丸まらない所までが目安です。止まったのを確認したら「オーケー」と伝えます。",
+    steps:[{type:"go",t:"ひざを軽く曲げて、背すじを伸ばしたまま、股関節から目いっぱいお辞儀して、そのまま止めてください。",tag:"max"},
+           {type:"back",t:"はい、オーケーです。ゆっくり戻ってください。"}]},
+  腕:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false, goMin:60, backMax:40,
+    how:"いつものアドレスの向き(カメラに体の横を向ける)でまっすぐ立ちます。両腕をそろえて、体の前から頭の上まで目いっぱい上げて止めます。腰をそらさないのがポイントです。止まったのを確認したら「オーケー」と伝えます。",
+    steps:[{type:"go",t:"両腕を前から、頭の上まで目いっぱい上げて、そのまま止めてください。",tag:"max"},
+           {type:"back",t:"はい、オーケーです。腕を下ろしてください。"}]},
 };
+const HOLD_MS=2000, STILL_DEG=5, STEP_TIMEOUT=25000;
+
+// ---------------------------------------------------------------- お手本アニメーション(棒人間)
+// kind ごとに、0〜1の進み具合 p に合わせてポーズを描く。tag を渡すとその動きだけを描く。
+function demoPose(kind,p,tag){
+  const ease=x=>x<0.5? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+  const hold=(a,b,c)=> p<a? ease(p/a) : p<b? 1 : Math.max(0,1-ease((p-b)/(c-b)));   // 上げる→止める→戻す
+  if(kind==="捻転"){
+    if(tag==="right") return {rot: 75*hold(0.3,0.8,1), label:"右へひねって止める"};
+    if(tag==="left") return {rot:-70*hold(0.3,0.8,1), label:"左へひねって止める"};
+    if(tag==="base") return {rot:0,label:"正面で止まる"};
+    if(p<0.5){ const q=p/0.5; return {rot:75*(q<0.3?ease(q/0.3):q<0.75?1:1-ease((q-0.75)/0.25)), label:"右へひねって止める"}; }
+    const q=(p-0.5)/0.5; return {rot:-70*(q<0.3?ease(q/0.3):q<0.75?1:1-ease((q-0.75)/0.25)), label:"左へひねって止める"};
+  }
+  if(kind==="前傾") return {hinge: 75*hold(0.3,0.75,1), label:"股関節からお辞儀して止める"};
+  return {arm: 170*hold(0.3,0.75,1), label:"両腕を頭の上まで上げて止める"};
+}
+function drawDemo(cnv,kind,p,tag){
+  const c=cnv.getContext("2d"), W=cnv.width, H=cnv.height, s=H/240;
+  c.clearRect(0,0,W,H); c.lineCap="round"; c.lineJoin="round";
+  const P=demoPose(kind,p,tag), col="#e9f1ec", hi="#4ade80";
+  c.strokeStyle=col; c.fillStyle=col; c.lineWidth=6*s;
+  const line=(x1,y1,x2,y2,st)=>{ c.strokeStyle=st||col; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); };
+  const cx=W/2;
+  if(kind==="捻転"){
+    // 正面から見た姿: ひねると肩幅が縮んで見える
+    const a=P.rot*Math.PI/180, half=48*s*Math.cos(a), hip=34*s*Math.cos(a*0.45);
+    const shY=80*s, hipY=150*s;
+    line(cx-hip,hipY,cx-22*s,225*s); line(cx+hip,hipY,cx+22*s,225*s);          // 脚(動かさない)
+    line(cx-hip,hipY,cx+hip,hipY);
+    line(cx,shY,cx,hipY);
+    line(cx-half,shY,cx+half,shY,hi);                                         // 肩(緑)
+    line(cx-half*0.9,shY+8*s,cx+half*0.5,shY+40*s); line(cx+half*0.9,shY+8*s,cx-half*0.5,shY+40*s); // 組んだ腕
+    c.beginPath(); c.arc(cx+Math.sin(a)*6*s,shY-28*s,17*s,0,7); c.fill();
+    // 上から見た図
+    const ox=W-46*s, oy=46*s; c.lineWidth=3*s; c.strokeStyle="#9db3a6"; c.beginPath(); c.arc(ox,oy,30*s,0,7); c.stroke();
+    line(ox-26*s*Math.cos(a),oy-26*s*Math.sin(a),ox+26*s*Math.cos(a),oy+26*s*Math.sin(a),hi);
+    c.fillStyle="#9db3a6"; c.font=`${11*s}px sans-serif`; c.textAlign="center"; c.fillText("上から見た肩",ox,oy+44*s); c.fillText("カメラ ↓",ox,oy+56*s);
+    c.lineWidth=6*s;
+  } else {
+    // 横から見た姿(右を向いて立つ)
+    const footY=225*s, hipX=cx-10*s, hipY=145*s, kneeX=hipX+8*s+(kind==="前傾"? P.hinge/75*8*s:0), kneeY=185*s;
+    line(hipX-14*s,footY,hipX+30*s,footY);                                    // 足
+    line(hipX,footY,kneeX,kneeY); line(kneeX,kneeY,hipX - (kind==="前傾"? P.hinge/75*14*s:0),hipY);
+    const hx=hipX - (kind==="前傾"? P.hinge/75*14*s:0);
+    const tilt=(kind==="前傾"? P.hinge:0)*Math.PI/180, L=70*s;
+    const shX=hx+Math.sin(tilt)*L, shY=hipY-Math.cos(tilt)*L;
+    line(hx,hipY,shX,shY,kind==="前傾"? hi:col);                              // 背骨
+    c.beginPath(); c.arc(shX+Math.sin(tilt)*24*s,shY-Math.cos(tilt)*24*s,16*s,0,7); c.fill();
+    let armA = kind==="腕"? P.arm*Math.PI/180 : 0;                           // 0=下、180=真上(体の前を通る)
+    const dirX=Math.sin(armA+tilt*0), dirY=Math.cos(armA);
+    const ax=shX+ (kind==="前傾"? 0 : dirX*62*s), ay=shY+(kind==="前傾"? 62*s : dirY*62*s);
+    line(shX,shY,ax,ay,kind==="腕"? hi:col);
+    if(kind==="前傾"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(hx,hipY,hx,hipY-80*s,"#9db3a6"); c.setLineDash([]); c.lineWidth=6*s; }
+    if(kind==="腕"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(shX,shY,hx,hipY,"#9db3a6"); c.setLineDash([]); c.lineWidth=6*s; }
+  }
+  c.fillStyle="#4ade80"; c.font=`bold ${15*s}px sans-serif`; c.textAlign="left"; c.fillText(P.label,8*s,20*s);
+}
+let demoT0=performance.now();
+function demoLoop(){
+  const k=$("bodyKind").value, cyc= k==="捻転"? 7000 : 4000;
+  if($("bodySetup").style.display!=="none") drawDemo($("demo"),k,((performance.now()-demoT0)%cyc)/cyc);
+  requestAnimationFrame(demoLoop);
+}
+function showHow(){ $("demoText").textContent=GUIDE[$("bodyKind").value].how; demoT0=performance.now(); }
+window.drawDemo=drawDemo;
+
+// 案内つきで測ったとき: 「止めている間」のコマだけを使って測る(動いている途中のコマに引っぱられない)
+function measureGuided(kind,rec,ratio){
+  const G=GUIDE[kind];
+  const pick=(tag)=>rec.filter(f=>f.tag===tag && f.img && f.hold).map(f=>aspect([f.img],ratio)[0]);
+  if(kind==="捻転"){
+    const base=pick("base");
+    if(base.length<3) throw new Error("最初の正面の姿勢がうまく映りませんでした。");
+    const sw0=median(base.map(f=>Math.abs(f[L_SH][0]-f[R_SH][0]))), hw0=median(base.map(f=>Math.abs(f[L_HIP][0]-f[R_HIP][0])));
+    const torso=median(base.map(f=>{ const a=center(f,L_SH,R_SH), b=center(f,L_HIP,R_HIP); return Math.hypot(a[0]-b[0],a[1]-b[1]); }));
+    if(sw0/torso<0.45) throw new Error("最初の姿勢が正面を向いていないようです。カメラに胸を向けてください。");
+    const ang=(w,w0)=>Math.round(deg(Math.acos(Math.max(0,Math.min(1,w/w0)))));
+    const out={};
+    for(const side of ["right","left"]){
+      const fr=pick(side); if(fr.length<3) continue;
+      // 止めている間の肩幅の中央値
+      const sws=fr.map(f=>Math.abs(f[L_SH][0]-f[R_SH][0])).sort((a,b)=>a-b), hws=fr.map(f=>Math.abs(f[L_HIP][0]-f[R_HIP][0])).sort((a,b)=>a-b);
+      out["rot_"+side]=ang(median(sws),sw0); out["hip_"+side]=ang(median(hws),hw0);
+    }
+    if(!Object.keys(out).length) throw new Error("ひねっている間の体がうまく映りませんでした。");
+    return out;
+  }
+  const fr=pick("max"); if(fr.length<3) throw new Error("止めている間の体がうまく映りませんでした。");
+  const vals = kind==="前傾"? fr.map(spineTilt) : fr.map(f=>measureArm([f]).arm);
+  return kind==="前傾"? {hinge:Math.round(median(vals))} : {arm:Math.round(median(vals))};
+}
+window.measureGuided=measureGuided;
 async function bodyCamera(){
-  const kind=$("bodyKind").value, G=GUIDE[kind];
+  const kind=$("bodyKind").value, G=GUIDE[kind], mini=$("demoMini");
   speak("体チェックを始めます");
   $("setup").style.display="none"; $("bodySetup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   try{
-    stream=await openCamera($("camBody").value);
+    curSel="camBody"; stream=await openCamera($("camBody").value);
     const v=$("vid"); v.srcObject=stream; await v.play();
     setStatus("姿勢推定を準備中…","wait"); setGuide("準備中…"); await initPose();
     running=true;
-    const rec=[]; const t0=performance.now(); let readySince=null, phase="wait", stepAt=0, si=0;
-    speak(G.ready); setStatus("全身が映るように立ってください","wait"); setGuide(G.ready);
+    const rec=[]; const t0=performance.now(), ratio=()=>v.videoWidth/v.videoHeight;
+    let readySince=null, phase="wait", si=0, stepAt=0, listening=false, sw0=null, holdStart=null, win=[];
+    // 今の動きの大きさ(度): 捻転=正面からひねった角度 / 前傾=お辞儀の角度 / 腕=腕の上がる角度
+    const metric=img=>{ const f=aspect([img],ratio())[0];
+      if(kind==="捻転") return sw0? deg(Math.acos(Math.max(0,Math.min(1,Math.abs(f[L_SH][0]-f[R_SH][0])/sw0)))) : 0;
+      if(kind==="前傾") return spineTilt(f);
+      return measureArm([f]).arm; };
+    const say=async text=>{ listening=false; await speak(text); await new Promise(r=>setTimeout(r,400)); listening=true; stepAt=performance.now(); holdStart=null; win=[]; };
+    const nextStep=async()=>{ si++; if(si>=G.steps.length) return true; say(G.steps[si].t); return false; };
+    setStatus("全身が映るように立ってください","wait"); setGuide(G.ready); await speak(G.ready);
     await new Promise((done,ng)=>{
       const loop=async()=>{
         if(!running){ ng(new Error("中止しました")); return; }
         const t=performance.now();
-        if(t-t0>60000 && phase==="wait"){ ng(new Error("全身が映りませんでした。カメラから少し離れて、頭から足まで入るように立ってください。")); return; }
+        if(t-t0>90000 && phase==="wait"){ ng(new Error("全身が映りませんでした。カメラから少し離れて、頭から足まで入るように立ってください。")); return; }
+        if(!frameReady(v)){ requestAnimationFrame(loop); return; }
         await pose.send({image:v}); const L=landmarks(lastResults); draw(v,L.img);
         if(phase==="wait"){
           let ok=!!L.img;
-          if(ok && G.facing){ const f=aspect([L.img],v.videoWidth/v.videoHeight)[0]; const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP);
+          if(ok && G.facing){ const f=aspect([L.img],ratio())[0]; const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP);
             ok=Math.abs(f[L_SH][0]-f[R_SH][0])/Math.hypot(sh[0]-hp[0],sh[1]-hp[1])>=0.45; }
           if(ok){ readySince=readySince??t; setGuide("そのまま止まってください","OK!");
-            if(t-readySince>1200){ phase="run"; stepAt=t; speak(G.steps[0][1]); setStatus("測定中","busy"); } }
+            if(t-readySince>1000){ phase="run"; setStatus("測定中","busy"); say(G.steps[0].t); } }
           else { readySince=null; setGuide(L.img? (G.facing? "カメラに胸を向けてください" : G.ready) : "頭から足まで映るように、少し離れてください"); }
-        } else {
-          rec.push({t,img:L.img,world:L.world});
-          setGuide(G.steps[si][1], Math.max(1,Math.ceil((G.steps[si][0]-(t-stepAt))/1000)));
-          if(t-stepAt>G.steps[si][0]){ si++; stepAt=t; if(si>=G.steps.length){ done(); return; } speak(G.steps[si][1]); }
+          requestAnimationFrame(loop); return;
         }
+        const st=G.steps[si];
+        if(st.tag){ mini.style.display="block"; drawDemo(mini,kind,0.5,st.tag); } else mini.style.display="none";
+        if(!listening){ setGuide(st.t); rec.push({t,img:L.img,world:L.world,tag:null}); requestAnimationFrame(loop); return; }
+        const m= L.img? metric(L.img) : null;
+        let hold=false, label="";
+        if(st.type==="base"){
+          if(m!==null){ const f=aspect([L.img],ratio())[0]; win.push({t,w:Math.abs(f[L_SH][0]-f[R_SH][0])}); win=win.filter(x=>t-x.t<HOLD_MS);
+            const ws=win.map(x=>x.w), steady=ws.length>3 && (Math.max(...ws)-Math.min(...ws))/median(ws)<0.08;
+            if(steady){ holdStart=holdStart??t; hold=true; } else holdStart=null; }
+          label = holdStart? `そのまま… ${Math.max(0,Math.ceil((HOLD_MS-(t-holdStart))/1000))}` : "正面で止まってください";
+          if(holdStart && t-holdStart>=HOLD_MS){ sw0=median(win.map(x=>x.w)); rec.push({t,img:L.img,world:L.world,tag:st.tag,hold:true}); if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
+        } else if(st.type==="go"){
+          if(m!==null){ win.push({t,m}); win=win.filter(x=>t-x.t<1000);
+            const ms=win.map(x=>x.m), still=ms.length>3 && Math.max(...ms)-Math.min(...ms)<STILL_DEG;
+            if(m>=G.goMin && still){ holdStart=holdStart??t; hold=true; } else holdStart=null; }
+          label = m===null? "体が映っていません" : m<G.goMin? `もっと大きく… 今 ${Math.round(m)}度` : holdStart? `いいですね、そのまま止めて… ${Math.max(0,Math.ceil((HOLD_MS-(t-holdStart))/1000))}` : `止めてください 今 ${Math.round(m)}度`;
+          if(holdStart && t-holdStart>=HOLD_MS){ rec.push({t,img:L.img,world:L.world,tag:st.tag,hold:true}); if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
+          if(t-stepAt>STEP_TIMEOUT){ if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }   // 止まれなかったら先へ
+        } else {  // back
+          label = "元の姿勢に戻ってください";
+          if((m!==null && m<=G.backMax) || t-stepAt>8000){ if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
+        }
+        rec.push({t,img:L.img,world:L.world,tag:st.tag,hold});
+        setGuide(st.t+`<div style="font-size:18px;color:#fbbf24;margin-top:6px">${label}</div>`);
         requestAnimationFrame(loop);
       };
       loop();
     });
-    running=false; stream.getTracks().forEach(x=>x.stop()); setGuide("");
+    if(window.DEBUG) window.lastRec=rec.map(f=>({t:Math.round(f.t),tag:f.tag,hold:!!f.hold,m: f.img? Math.round(metric(f.img)) : null}));
+    await speak("おしまいです。");
+    running=false; stream.getTracks().forEach(x=>x.stop()); setGuide(""); mini.style.display="none";
     const fps=rec.length/((rec[rec.length-1].t-rec[0].t)/1000||1);
     const img=fillSmooth(rec.map(f=>f.img)), world=fillSmooth(rec.map(f=>f.world));
     if(!img || rec.filter(f=>f.img).length<0.5*rec.length) throw new Error("途中で体が映らなくなりました。全身が入るように立ってください。");
-    finishBody(kind,measureBody(kind,img,world,fps,v.videoWidth/v.videoHeight));
+    finishBody(kind,measureGuided(kind,rec,v.videoWidth/v.videoHeight));
     setStatus("体チェックが終わりました","ready");
-  }catch(e){ running=false; setGuide(""); if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
+  }catch(e){ running=false; setGuide(""); $("demoMini").style.display="none"; if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
   $("setup").style.display="block"; $("bodySetup").style.display="block"; $("ctrl").style.display="none"; window.analysisDone=true;
 }
 
@@ -781,7 +951,8 @@ $("pickFile").onclick=()=>$("file").click();
 $("file").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) analyzeFile(f); };  // 同じ動画を続けて選べるように
 $("bodyCam").onclick=bodyCamera; $("bodyFileBtn").onclick=()=>$("bodyFile").click();
 $("bodyFile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) bodyFromFile(f); };
-showBase();
+showBase(); loadCamPrefs(); showHow(); demoLoop(); $("bodyKind").onchange=showHow;
+$("flip").onclick=flipCamera; $("camSwing").onchange=saveCamPrefs; $("camBody").onchange=saveCamPrefs;
 $("clearHist").onclick=()=>{ if(confirm("スイングの記録と体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); showBase(); } };
 window.DEBUG=new URLSearchParams(location.search).has("debug");
 if(new URLSearchParams(location.search).get("rate")) window.PLAYBACK_RATE=+new URLSearchParams(location.search).get("rate");
