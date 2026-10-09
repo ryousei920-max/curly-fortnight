@@ -23,7 +23,10 @@ button:disabled{opacity:.5}
 #status{position:absolute;left:10px;top:10px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;font-weight:700}
 #status.ready{color:var(--accent)}#status.wait{color:var(--sub)}#status.busy{color:var(--warn)}
 .res h3{margin:0 0 8px;font-size:16px}
-.res ul{margin:6px 0 0;padding-left:18px}.res li{margin:4px 0;line-height:1.5}
+.res ul{margin:6px 0 0;padding-left:18px}
+details{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+summary{cursor:pointer;color:var(--accent);font-size:14px}
+details p{font-size:13px;line-height:1.6;margin:6px 0}.res li{margin:4px 0;line-height:1.5}
 .metric{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dashed var(--line);padding:4px 0}
 .metric b{font-variant-numeric:tabular-nums}
 .ok{color:var(--accent)}.ng{color:var(--bad)}
@@ -55,6 +58,24 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
       <button id="pickFile">動画を分析</button>
     </div>
     <input type="file" id="file" accept="video/*" hidden>
+  </div>
+
+  <div class="card" id="bodySetup">
+    <h3 style="margin:0 0 6px;font-size:16px">体チェック(可動域)</h3>
+    <p class="note" style="margin:0">カメラはいつもの後ろからの位置のままでOK。家で一度「基準」を測っておくと、打席で今日の体の状態を比べたり、スイングのアドバイスが「体の硬さが原因か、動かし方が原因か」まで分かるようになります。</p>
+    <label for="bodyKind">測る体操</label>
+    <select id="bodyKind">
+      <option value="捻転">① 肩・腰の捻転(カメラに胸を向けて、左右にひねる)</option>
+      <option value="前傾">② 前傾の深さ(アドレスの向きで、股関節からお辞儀)</option>
+      <option value="腕">③ 腕の上がり方(アドレスの向きで、両腕を頭の上へ)</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text)"><input type="checkbox" id="bodyBase" style="width:auto"> 基準として保存する(家などで落ち着いて測るとき)</label>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="bodyCam">カメラで測る</button>
+      <button id="bodyFileBtn">動画で測る</button>
+    </div>
+    <input type="file" id="bodyFile" accept="video/*" hidden>
+    <div id="bodyBaseView" class="note" style="margin-top:8px"></div>
   </div>
 
   <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div></div>
@@ -100,6 +121,15 @@ const SCALE={shoulder_turn:15,lead_elbow:15,spine_loss:6,early_ext:0.08,path_loo
 const ADV_DIR={spine_loss:1,early_ext:1,path_loop:1,head_rise:0,shoulder_turn:-1,lead_elbow:-1,spine_addr:0};
 const ADV_KEY={spine_loss:"spine_loss",early_ext:"early_ext",path_loop:"over_top",shoulder_turn:"shoulder_turn",lead_elbow:"lead_elbow",spine_addr:"spine_addr",head_rise:"head_rise"};
 
+const DRILL_DETAIL={"spine_loss": {"drill": "ゴルフバッグ(またはイス)をお尻のすぐ後ろに置き、お尻が軽く触れた状態で構えます。インパクトまでお尻が離れないように、ハーフスイングで素振り→実際に打つ、を10回ずつ。", "stretch": "太もも裏のストレッチ: 片足をかかとから前に出し、背すじを伸ばしたまま股関節からお辞儀する。前傾が保てないのは、太もも裏や股関節まわりの硬さが原因のこともあります。"}, "early_ext": {"drill": "ゴルフバッグをお尻の後ろに置き、切り返しからインパクトまで、お尻をバッグに押し付けたまま回るイメージで打ちます。最初はハーフスイング、慣れたらスリークォーターへ。", "stretch": "股関節の前側のストレッチ: 片ひざ立ちになり、腰を前へ押し出して後ろ足の付け根を伸ばす。"}, "spine_addr": {"drill": "クラブを背中に縦に当て、頭・背中・お尻の3か所がクラブに触れたまま、股関節からお辞儀してアドレスを作ります。鏡やスマホで角度を確認。", "stretch": "太もも裏のストレッチ: 片足をかかとから前に出し、背すじを伸ばしたまま股関節からお辞儀する。"}, "head_rise": {"drill": "インパクト後もボールがあった場所を1秒見続けてから顔を上げます。ティーの位置を見続けるつもりで10球。", "stretch": null}, "head_sink": {"drill": "ひざの曲げ具合を変えないことだけを意識して、ハーフスイングで素振り。慣れたらボールを打つ。", "stretch": null}, "over_top": {"drill": "ボールの向こう側(体から遠い側)、ボール1個分外側・少し目標寄りにヘッドカバーを置きます。外から下ろすとカバーに当たるので、当てないように打ちます。最初はハーフスイングで。切り返しで右ひじを右腰の前に落とす素振りも効果的です。", "stretch": null}, "plane_under": {"drill": "ボールの手前(体に近い側・後ろ寄り)にヘッドカバーを置き、それに当たらないように下ろして打ちます。", "stretch": null}, "shoulder_turn": {"drill": "クラブを胸の前で両腕で抱え、アドレスの前傾のまま、背中が目標を向くまで肩を回します。左右10回ずつ。", "stretch": "胸と背中のストレッチ: 横向きに寝てひざを曲げ、上の腕を本を開くように後ろへ開いて胸を開く(左右10回)。"}, "xfactor": {"drill": "右ひざの向きを変えないことを意識して、肩だけ深く回すハーフスイング。腰の回転を少し我慢する感覚をつかみます。", "stretch": "胸と背中のストレッチ: 横向きに寝てひざを曲げ、上の腕を本を開くように後ろへ開いて胸を開く(左右10回)。"}, "lead_elbow": {"drill": "左手一本でクラブを短く持ち、左ひじを伸ばしたまま腰から腰までのハーフスイングで10球。", "stretch": "肩の後ろ側のストレッチ: 左腕を胸の前に伸ばし、右手で胸に引き寄せる。"}, "head_back": {"drill": "ボールの少し右後ろの一点を見続け、頭の位置を変えないつもりでハーフスイング。", "stretch": null}, "head_impact": {"drill": "ボールの右側(後ろ側)を見たままインパクトする意識で打ちます。頭がボールより前に出ないように。", "stretch": null}, "hip_back": {"drill": "右腰のすぐ外側にゴルフバッグを置き、テークバックで腰がバッグに当たらないように回ります。", "stretch": null}, "hip_impact": {"drill": "両足をそろえて構え、テークバックで左足を目標側に踏み出し、踏み込みと同時に打ちます。体重移動の順番が身につきます。", "stretch": null}};
+const SAFETY="ストレッチは反動をつけず、痛みの出ない範囲で20〜30秒ずつ。痛みがあるときは無理をしないでください。";
+function drillHtml(keys){
+  const ks=[...new Set(keys)].filter(k=>DRILL_DETAIL[k]); if(!ks.length) return "";
+  let h='<details><summary>練習メニューとストレッチを見る</summary>', st=false;
+  for(const k of ks){ const d=DRILL_DETAIL[k]; h+=`<p>◆ <b>ドリル</b>: ${d.drill}</p>`; if(d.stretch){ h+=`<p>◇ <b>ストレッチ</b>: ${d.stretch}</p>`; st=true; } }
+  if(st) h+=`<p class="note">※${SAFETY}</p>`;
+  return h+'</details>';
+}
 // イヤホンで聞く用の短い一言(画面には詳しい説明を出す)
 const SHORT={
   over_top:"手が外側から下りています。右ひじを右腰の前に落とすイメージで。",
@@ -296,6 +326,8 @@ function analyzeSwing(img,world,fps,ratio,lo,hi,no){
   saveHistory(m);
   const keys=items.map(x=>x[0]).filter(Boolean);
   const text=items.map(x=>x[2]); if(mode==="上級者" && !adv) text.push("上級者モードは、記録が5本以上たまると使えます。");
+  // 体チェックの基準があれば、原因が「体の硬さ」か「動かし方」かを一言そえる
+  for(const [k,note] of bodyNotes(m)){ if(keys.includes(k)||theme==="全部"){ text.push(note); break; } }
   const voiceText=items.map(x=>SHORT[x[0]]||x[2]).concat(keys.length&&DRILL[keys[0]]? [DRILL[keys[0]]] : []);
   return {no,faceOn:false,ph,m,keys,text,voiceText,lines: lines || proRows(m), mode};
 }
@@ -305,7 +337,7 @@ function renderResult(r){
   if(r.faceOn){ el.innerHTML=head+`<p>${r.text[0]}</p>`; }
   else {
     const rows=r.lines.map(l=>`<div class="metric"><span>${l[0]}</span><b class="${l[2]===undefined?'':(l[2]?'ok':'ng')}">${l[1]}</b></div>`).join("");
-    el.innerHTML=head+rows+`<ul>${r.text.map(t=>`<li>${t}</li>`).join("")}</ul>`+(r.keys.length&&DRILL[r.keys[0]]?`<p class="note">${DRILL[r.keys[0]]}</p>`:"");
+    el.innerHTML=head+rows+`<ul>${r.text.map(t=>`<li>${t}</li>`).join("")}</ul>`+(r.keys.length&&DRILL[r.keys[0]]?`<p class="note">${DRILL[r.keys[0]]}</p>`:"")+drillHtml(r.keys);
   }
   $("results").prepend(el);
 }
@@ -323,7 +355,7 @@ function summarize(rs){
 // ---------------------------------------------------------------- 姿勢推定
 let pose=null, lastResults=null;
 function withTimeout(p,ms,msg){ return Promise.race([p,new Promise((_,ng)=>setTimeout(()=>ng(new Error(msg)),ms))]); }
-function fail(msg){ setStatus("エラー","wait"); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>うまく動きませんでした</h3><p>${msg}</p>`; $("results").prepend(el); $("setup").style.display="block"; speak(msg); window.analysisDone=true; }
+function fail(msg){ setStatus("エラー","wait"); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>うまく動きませんでした</h3><p>${msg}</p>`; $("results").prepend(el); $("setup").style.display="block"; if($("bodySetup")) $("bodySetup").style.display="block"; speak(msg); window.analysisDone=true; }
 function loadScript(src){ return new Promise((ok,ng)=>{ const s=document.createElement("script"); s.src=src; s.crossOrigin="anonymous"; s.onload=ok; s.onerror=()=>ng(new Error("load "+src)); document.head.appendChild(s); }); }
 async function initPose(){
   if(pose) return pose;
@@ -508,6 +540,148 @@ function stop(){
   $("setup").style.display="block"; $("ctrl").style.display="none";
 }
 
+// ---------------------------------------------------------------- 体チェック(可動域)
+const BODY_LABEL={rot_right:"右への捻転(テークバック方向)",rot_left:"左への捻転(フォロー方向)",hip_right:"右へひねったときの腰の回転",hip_left:"左へひねったときの腰の回転",hinge:"前傾の深さ(お辞儀の角度)",arm:"腕の上がる角度"};
+const DAILY_DROP={rot_right:10,rot_left:10,hip_right:8,hip_left:8,hinge:8,arm:10};
+function loadProfile(){ try{ return JSON.parse(localStorage.getItem("bodyProfile")||'{"records":[]}'); }catch(e){ return {records:[]}; } }
+function saveRecord(kind,values,base){ try{ const p=loadProfile(); p.records.push({t:Date.now(),kind,base,values}); localStorage.setItem("bodyProfile",JSON.stringify(p)); }catch(e){} }
+function baselineValues(){
+  const base={}, all={};
+  for(const r of loadProfile().records) for(const [k,v] of Object.entries(r.values)){ (all[k]=all[k]||[]).push(v); if(r.base) base[k]=v; }
+  for(const [k,vs] of Object.entries(all)) if(!(k in base)) base[k]=median(vs);
+  return base;
+}
+function measureRotation(imgM,world,fps){
+  const k0=Math.max(3,Math.round(0.5*fps)), n=imgM.length;
+  const sw=imgM.map(f=>Math.abs(f[L_SH][0]-f[R_SH][0])), hw=imgM.map(f=>Math.abs(f[L_HIP][0]-f[R_HIP][0]));
+  const sw0=median(sw.slice(0,k0)), hw0=median(hw.slice(0,k0));
+  const torso=median(imgM.slice(0,k0).map(f=>{ const a=center(f,L_SH,R_SH), b=center(f,L_HIP,R_HIP); return Math.hypot(a[0]-b[0],a[1]-b[1]); }));
+  if(!(sw0>0&&hw0>0) || sw0/torso<0.45) throw new Error("最初の姿勢が正面を向いていないようです。カメラに胸を向けてから、ひねり始めてください。");
+  const ang=(w,w0)=>deg(Math.acos(Math.max(0,Math.min(1,w/w0))));
+  const ys=world.map(w=>yaw(w,L_SH,R_SH)), y0=median(ys.slice(0,k0));
+  const out={};
+  for(const [name,isRight] of [["right",true],["left",false]]){
+    let best=-1;
+    for(let i=0;i<n;i++){ let d=ys[i]-y0; d=((d+180)%360+360)%360-180; const right=d<0; const a=ang(sw[i],sw0);
+      if(right===isRight && a>15 && (best<0 || a>ang(sw[best],sw0))) best=i; }
+    if(best>=0){ out["rot_"+name]=Math.round(ang(sw[best],sw0)); out["hip_"+name]=Math.round(ang(hw[best],hw0)); }
+  }
+  if(!Object.keys(out).length) throw new Error("ひねる動きが見つかりませんでした。");
+  return out;
+}
+function measureHinge(imgM){ return {hinge:Math.round(percentile(imgM.map(spineTilt),97))}; }
+function measureArm(imgM){
+  let best=0;
+  for(const f of imgM){ const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP), wr=[(f[L_WR][0]+f[R_WR][0])/2,(f[L_WR][1]+f[R_WR][1])/2];
+    const v1=[hp[0]-sh[0],hp[1]-sh[1]], v2=[wr[0]-sh[0],wr[1]-sh[1]];
+    const c=(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)+1e-9); best=Math.max(best,deg(Math.acos(Math.max(-1,Math.min(1,c))))); }
+  return {arm:Math.round(best)};
+}
+function measureBody(kind,img,world,fps,ratio){
+  const imgM=aspect(img,ratio);
+  if(kind==="捻転") return measureRotation(imgM,world,fps);
+  if(kind==="前傾") return measureHinge(imgM);
+  return measureArm(imgM);
+}
+window.measureBody=measureBody;
+function dailyMessage(values,base){
+  const drops=Object.entries(values).filter(([k,v])=>k in base && base[k]-v>=(DAILY_DROP[k]||10)).map(([k,v])=>[base[k]-v,k]).sort((a,b)=>b[0]-a[0]);
+  if(!drops.length) return "今日の体の動きは、いつもと同じくらいです。いつも通りの練習でOKです。";
+  const [d,k]=drops[0];
+  return `今日は${BODY_LABEL[k].replace(/\(.*\)/,"")}が、いつもより${Math.round(d)}度小さいです。体が硬めなので、最初はハーフスイングから始めて、体をほぐしてから振りましょう。`;
+}
+function bodyNotes(m){
+  const base=baselineValues(), notes=[];
+  const rot=base.rot_right;
+  if(rot && m.shoulder_turn>=30){
+    if(m.shoulder_turn<rot*0.75) notes.push(["shoulder_turn",`体は約${Math.round(rot)}度ひねれるのに、スイングでは約${m.shoulder_turn}度しか回っていません。体の硬さではなく、回し方の問題です。テークバックで背中を目標に向ける意識を持ちましょう。`]);
+    else if(m.shoulder_turn<70 && rot<70) notes.push(["shoulder_turn",`体のひねれる量そのもの(約${Math.round(rot)}度)が少なめです。肩の回転が浅いのは体の硬さが原因の可能性が高いので、胸と背中のストレッチを続けましょう。`]);
+  }
+  const hinge=base.hinge;
+  if(hinge && num(m.spine_loss) && m.spine_loss>8){
+    if(hinge<60) notes.push(["spine_loss",`お辞儀できる深さが約${Math.round(hinge)}度と浅めです。前傾が起き上がるのは、太もも裏や股関節の硬さが原因かもしれません。ストレッチを続けると前傾を保ちやすくなります。`]);
+    else notes.push(["spine_loss","前傾を保つための柔軟性は十分あります。起き上がりは動き方の癖なので、壁ドリルで直していきましょう。"]);
+  }
+  const arm=base.arm;
+  if(arm && m.lead_elbow<150 && arm<150) notes.push(["lead_elbow",`腕の上がる角度が約${Math.round(arm)}度と少なめです。トップで左ひじが曲がるのは、肩まわりの硬さも関係していそうです。`]);
+  return notes;
+}
+function showBase(){
+  const b=baselineValues(), ks=Object.keys(b);
+  $("bodyBaseView").textContent= ks.length? "保存している基準: "+ks.map(k=>`${BODY_LABEL[k].replace(/\(.*\)/,"")} ${Math.round(b[k])}度`).join(" / ") : "まだ基準は保存されていません。";
+}
+function finishBody(kind,values){
+  const base=baselineValues(), first=!Object.keys(values).some(k=>k in base), asBase=$("bodyBase").checked||first;
+  const msg= asBase? "測定した値を、あなたの基準として保存しました。打席で同じ体操をすると、今日の体の状態を比べられます。" : dailyMessage(values,base);
+  saveRecord(kind,values,asBase);
+  const rows=Object.entries(values).map(([k,v])=>`<div class="metric"><span>${BODY_LABEL[k]}</span><b>${v}度${k in base?` (基準 ${Math.round(base[k])}度)`:""}</b></div>`).join("");
+  const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>体チェック: ${kind}</h3>${rows}<p>${msg}</p>`; $("results").prepend(el);
+  speak(msg); showBase();
+  window.bodyResult={kind,values,msg};
+}
+async function bodyFromFile(file){
+  const kind=$("bodyKind").value;
+  speak("体チェックの動画を分析します");
+  $("setup").style.display="none"; $("bodySetup").style.display="none"; $("stage").style.display="block";
+  try{
+    const {frames,fps,ratio}=await collectFrames(file);
+    if(frames.filter(f=>f.img).length<0.3*frames.length) throw new Error("全身が映っている人を見つけられませんでした。頭から足まで入るように撮ってください。");
+    const img=fillSmooth(frames.map(f=>f.img)), world=fillSmooth(frames.map(f=>f.world));
+    finishBody(kind,measureBody(kind,img,world,fps,ratio));
+    setStatus("体チェックが終わりました","ready");
+  }catch(e){ fail("測定できませんでした: "+e.message); }
+  $("setup").style.display="block"; $("bodySetup").style.display="block"; window.analysisDone=true;
+}
+// カメラで測る: 音声で順番に案内しながら記録する
+const GUIDE={
+  捻転:{ready:"カメラに胸を向けて、全身が映るように立ってください。", facing:true,
+    steps:[[1500,"そのまま正面で止まってください。"],[2500,"右へ、目いっぱいひねって、止めてください。"],[4000,"正面に戻ってください。"],[2000,"左へ、目いっぱいひねって、止めてください。"],[4000,"正面に戻ってください。"]]},
+  前傾:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false,
+    steps:[[1500,"ひざを軽く曲げて、背すじを伸ばしたまま、股関節から目いっぱいお辞儀して、止めてください。"],[5000,"ゆっくり戻ってください。"]]},
+  腕:{ready:"いつものアドレスの向きで、全身が映るように立ってください。", facing:false,
+    steps:[[1500,"両腕を前から、頭の上まで目いっぱい上げて、止めてください。"],[5000,"腕を下ろしてください。"]]},
+};
+async function bodyCamera(){
+  const kind=$("bodyKind").value, G=GUIDE[kind];
+  speak("体チェックを始めます");
+  $("setup").style.display="none"; $("bodySetup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:720},height:{ideal:1280}},audio:false});
+    const v=$("vid"); v.srcObject=stream; await v.play();
+    setStatus("姿勢推定を準備中…","wait"); await initPose();
+    running=true;
+    const rec=[]; const t0=performance.now(); let readySince=null, phase="wait", stepAt=0, si=0;
+    speak(G.ready); setStatus("全身が映るように立ってください","wait");
+    await new Promise((done,ng)=>{
+      const loop=async()=>{
+        if(!running){ ng(new Error("中止しました")); return; }
+        const t=performance.now();
+        if(t-t0>60000 && phase==="wait"){ ng(new Error("全身が映りませんでした。カメラから少し離れて、頭から足まで入るように立ってください。")); return; }
+        await pose.send({image:v}); const L=landmarks(lastResults); draw(v,L.img);
+        if(phase==="wait"){
+          let ok=!!L.img;
+          if(ok && G.facing){ const f=aspect([L.img],v.videoWidth/v.videoHeight)[0]; const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP);
+            ok=Math.abs(f[L_SH][0]-f[R_SH][0])/Math.hypot(sh[0]-hp[0],sh[1]-hp[1])>=0.45; }
+          if(ok){ readySince=readySince??t; if(t-readySince>1200){ phase="run"; stepAt=t; speak(G.steps[0][1]); setStatus("測定中","busy"); } }
+          else { readySince=null; }
+        } else {
+          rec.push({t,img:L.img,world:L.world});
+          if(t-stepAt>G.steps[si][0]){ si++; stepAt=t; if(si>=G.steps.length){ done(); return; } speak(G.steps[si][1]); }
+        }
+        requestAnimationFrame(loop);
+      };
+      loop();
+    });
+    running=false; stream.getTracks().forEach(x=>x.stop());
+    const fps=rec.length/((rec[rec.length-1].t-rec[0].t)/1000||1);
+    const img=fillSmooth(rec.map(f=>f.img)), world=fillSmooth(rec.map(f=>f.world));
+    if(!img || rec.filter(f=>f.img).length<0.5*rec.length) throw new Error("途中で体が映らなくなりました。全身が入るように立ってください。");
+    finishBody(kind,measureBody(kind,img,world,fps,v.videoWidth/v.videoHeight));
+    setStatus("体チェックが終わりました","ready");
+  }catch(e){ running=false; if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
+  $("setup").style.display="block"; $("bodySetup").style.display="block"; $("ctrl").style.display="none"; window.analysisDone=true;
+}
+
 // ---------------------------------------------------------------- 動画ファイル(撮った動画の分析・テスト用)
 // 再生しながら関節を取る(1コマずつシークするより、iPhoneで確実に動く)。
 // 処理の速さに合わせて再生速度を落とし、だいたい1秒30コマ分の情報を集めてから、等間隔にならす。
@@ -521,49 +695,52 @@ function resample(raw,fps,dur){
   }
   return out;
 }
+// 動画ファイルから、1秒30コマぶんの関節を取り出す
+async function collectFrames(file){
+  const v=$("vid"); v.srcObject=null; v.src=URL.createObjectURL(file); v.load();
+  setStatus("動画を読み込み中…","wait");
+  await withTimeout(new Promise(r=>{ if(v.readyState>=2) r(); else v.onloadeddata=()=>r(); }), 20000, "動画を読み込めませんでした。別の動画で試してください。");
+  setStatus("姿勢推定を準備中…","wait"); await initPose();
+  const dur=v.duration; if(!isFinite(dur)||dur<=0) throw new Error("動画の長さを読み取れませんでした。");
+    const raw=[];
+  const record=async t=>{ await pose.send({image:v}); const L=landmarks(lastResults);
+    raw.push({t, img:L.img, world:L.world});
+    draw(v,L.img); setStatus(`解析中 ${Math.round(t/dur*100)}%`,"busy"); };
+  v.currentTime=0;
+  if("requestVideoFrameCallback" in v && !window.PLAYBACK_RATE){
+    // 1コマ映るたびに一時停止 → 解析 → 再生、をくり返す(コマを取りこぼさない)
+    await new Promise((done,ng)=>{
+      let last=-1, watchdog=null;
+      const arm=()=>{ clearTimeout(watchdog); watchdog=setTimeout(()=>ng(new Error("動画の再生が止まってしまいました。")),15000); };
+      const onFrame=async(now,meta)=>{
+        const t=meta.mediaTime; arm();
+        if(t-last>=1/30-0.004){ v.pause(); last=t; await record(t); }
+        if(v.ended || t>=dur-0.03){ clearTimeout(watchdog); done(); return; }
+        v.requestVideoFrameCallback(onFrame);
+        if(v.paused) v.play().catch(e=>{ if(e.name!=="AbortError") ng(e); });  // 一時停止との競合(AbortError)は問題ないので無視
+      };
+      v.onended=()=>{ clearTimeout(watchdog); done(); };
+      v.requestVideoFrameCallback(onFrame); arm();
+      v.play().catch(e=>{ if(e.name!=="AbortError") ng(new Error("動画を再生できませんでした: "+e.message)); });
+    });
+  } else {
+    // 古いブラウザ向け: ゆっくり再生しながら取れるだけ取る
+    v.playbackRate=Math.max(0.1,window.PLAYBACK_RATE||0.25); await v.play();
+    await new Promise((done,ng)=>{ let lastT=-1, stuck=0;
+      const step=async()=>{ if(v.ended || v.currentTime>=dur-0.03){ done(); return; }
+        const t=v.currentTime; if(t!==lastT){ stuck=0; lastT=t; await record(t); } else if(++stuck>900){ ng(new Error("動画の再生が止まってしまいました。")); return; }
+        requestAnimationFrame(step); };
+      v.onended=()=>done(); step(); });
+  }
+  v.pause();
+  raw.sort((a,b)=>a.t-b.t);
+  const fps=30; return {frames:resample(raw,fps,dur), fps, ratio:v.videoWidth/v.videoHeight};
+}
 async function analyzeFile(file){
   speak("動画を分析します");
   $("setup").style.display="none"; $("stage").style.display="block";
-  try{
-    const v=$("vid"); v.srcObject=null; v.src=URL.createObjectURL(file); v.load();
-    setStatus("動画を読み込み中…","wait");
-    await withTimeout(new Promise(r=>{ if(v.readyState>=2) r(); else v.onloadeddata=()=>r(); }), 20000, "動画を読み込めませんでした。別の動画で試してください。");
-    setStatus("姿勢推定を準備中…","wait"); await initPose();
-    const dur=v.duration; if(!isFinite(dur)||dur<=0) throw new Error("動画の長さを読み取れませんでした。");
-    const raw=[];
-    const record=async t=>{ await pose.send({image:v}); const L=landmarks(lastResults);
-      raw.push({t, img:L.img, world:L.world});
-      draw(v,L.img); setStatus(`解析中 ${Math.round(t/dur*100)}%`,"busy"); };
-    v.currentTime=0;
-    if("requestVideoFrameCallback" in v && !window.PLAYBACK_RATE){
-      // 1コマ映るたびに一時停止 → 解析 → 再生、をくり返す(コマを取りこぼさない)
-      await new Promise((done,ng)=>{
-        let last=-1, watchdog=null;
-        const arm=()=>{ clearTimeout(watchdog); watchdog=setTimeout(()=>ng(new Error("動画の再生が止まってしまいました。")),15000); };
-        const onFrame=async(now,meta)=>{
-          const t=meta.mediaTime; arm();
-          if(t-last>=1/30-0.004){ v.pause(); last=t; await record(t); }
-          if(v.ended || t>=dur-0.03){ clearTimeout(watchdog); done(); return; }
-          v.requestVideoFrameCallback(onFrame);
-          if(v.paused) v.play().catch(e=>ng(e));
-        };
-        v.onended=()=>{ clearTimeout(watchdog); done(); };
-        v.requestVideoFrameCallback(onFrame); arm();
-        v.play().catch(e=>ng(new Error("動画を再生できませんでした: "+e.message)));
-      });
-    } else {
-      // 古いブラウザ向け: ゆっくり再生しながら取れるだけ取る
-      v.playbackRate=Math.max(0.1,window.PLAYBACK_RATE||0.25); await v.play();
-      await new Promise((done,ng)=>{ let lastT=-1, stuck=0;
-        const step=async()=>{ if(v.ended || v.currentTime>=dur-0.03){ done(); return; }
-          const t=v.currentTime; if(t!==lastT){ stuck=0; lastT=t; await record(t); } else if(++stuck>900){ ng(new Error("動画の再生が止まってしまいました。")); return; }
-          requestAnimationFrame(step); };
-        v.onended=()=>done(); step(); });
-    }
-    v.pause();
-    raw.sort((a,b)=>a.t-b.t);
-    var fps=30, frames=resample(raw,fps,dur);
-  }catch(e){ fail(e.message); return; }
+  let frames,fps;
+  try{ const c=await collectFrames(file); frames=c.frames; fps=c.fps; }catch(e){ fail(e.message); return; }
   const v=$("vid");
   const validRate=frames.filter(f=>f.img).length/Math.max(1,frames.length);
   if(validRate<0.3){ fail("動画の中に、全身が映っている人を見つけられませんでした。頭から足まで入るように撮ってください。"); return; }
@@ -583,8 +760,11 @@ async function analyzeFile(file){
 
 $("startCam").onclick=startCamera; $("stop").onclick=stop;
 $("pickFile").onclick=()=>$("file").click();
-$("file").onchange=e=>{ if(e.target.files[0]) analyzeFile(e.target.files[0]); };
-$("clearHist").onclick=()=>{ if(confirm("これまでの記録を消しますか?")){ localStorage.removeItem("swingHistory"); } };
+$("file").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) analyzeFile(f); };  // 同じ動画を続けて選べるように
+$("bodyCam").onclick=bodyCamera; $("bodyFileBtn").onclick=()=>$("bodyFile").click();
+$("bodyFile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) bodyFromFile(f); };
+showBase();
+$("clearHist").onclick=()=>{ if(confirm("スイングの記録と体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); showBase(); } };
 window.DEBUG=new URLSearchParams(location.search).has("debug");
 if(new URLSearchParams(location.search).get("rate")) window.PLAYBACK_RATE=+new URLSearchParams(location.search).get("rate");
 </script>
