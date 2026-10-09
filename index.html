@@ -49,7 +49,7 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     </div>
     <label for="quality">解析の細かさ</label>
     <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select>
-    <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。イヤホンをつないでおくと便利です。</p>
+    <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。スマホを置いたら、近く(1〜2m)でカメラに手のひらを見せるとスタート。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。続けて打つときは合図なしでOK。1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="startCam">カメラで開始</button>
       <button id="pickFile">動画を分析</button>
@@ -71,6 +71,8 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
 <script>
 // ---------------------------------------------------------------- 設定
 const CDN = (new URLSearchParams(location.search).get("cdn")) || "https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/";
+const HCDN = (new URLSearchParams(location.search).get("hcdn")) || "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/";
+const SLEEP_AFTER = 60000;  // 体が映らない状態がこれだけ続いたら、手のひら待ちに戻る(ミリ秒)
 const NOSE=0,L_SH=11,R_SH=12,L_EL=13,R_EL=14,L_WR=15,R_WR=16,L_HIP=23,R_HIP=24,L_KN=25,R_KN=26,L_AN=27,R_AN=28;
 const BONES=[[L_SH,R_SH],[L_SH,L_EL],[L_EL,L_WR],[R_SH,R_EL],[R_EL,R_WR],[L_SH,L_HIP],[R_SH,R_HIP],[L_HIP,R_HIP],[L_HIP,L_KN],[L_KN,L_AN],[R_HIP,R_KN],[R_KN,R_AN]];
 const $=id=>document.getElementById(id);
@@ -321,7 +323,7 @@ function summarize(rs){
 // ---------------------------------------------------------------- 姿勢推定
 let pose=null, lastResults=null;
 function withTimeout(p,ms,msg){ return Promise.race([p,new Promise((_,ng)=>setTimeout(()=>ng(new Error(msg)),ms))]); }
-function fail(msg){ setStatus("エラー","wait"); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>うまく動きませんでした</h3><p>${msg}</p>`; $("results").prepend(el); $("setup").style.display="block"; speak("うまく動きませんでした。"); window.analysisDone=true; }
+function fail(msg){ setStatus("エラー","wait"); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>うまく動きませんでした</h3><p>${msg}</p>`; $("results").prepend(el); $("setup").style.display="block"; speak(msg); window.analysisDone=true; }
 function loadScript(src){ return new Promise((ok,ng)=>{ const s=document.createElement("script"); s.src=src; s.crossOrigin="anonymous"; s.onload=ok; s.onerror=()=>ng(new Error("load "+src)); document.head.appendChild(s); }); }
 async function initPose(){
   if(pose) return pose;
@@ -333,6 +335,19 @@ async function initPose(){
   return pose;
 }
 function toArr(lms){ return lms? lms.map(p=>[p.x,p.y,p.z??0]) : null; }
+// 本当に人の全身が映っているか(人がいないのに「人らしきもの」を拾うのを防ぐ)
+const BODY=[NOSE,L_SH,R_SH,L_HIP,R_HIP,L_KN,R_KN,L_AN,R_AN,L_WR,R_WR];
+function bodyOk(lms){
+  if(!lms) return false;
+  const vis=BODY.map(i=>lms[i].visibility??1); const meanVis=vis.reduce((a,b)=>a+b,0)/vis.length;
+  if(meanVis<0.6) return false;
+  const shY=(lms[L_SH].y+lms[R_SH].y)/2, hipY=(lms[L_HIP].y+lms[R_HIP].y)/2, anY=(lms[L_AN].y+lms[R_AN].y)/2;
+  if(!(lms[NOSE].y<hipY && shY<hipY && hipY<anY)) return false;           // 頭→肩→腰→足首の順に並んでいる
+  if(anY-shY<0.25) return false;                                          // 体が小さすぎる(遠すぎ・誤検出)
+  const inFrame=BODY.filter(i=>lms[i].x>-0.05&&lms[i].x<1.05&&lms[i].y>-0.05&&lms[i].y<1.08).length;
+  return inFrame>=BODY.length-1;
+}
+function landmarks(r){ const ok=r&&bodyOk(r.poseLandmarks); return {img: ok? toArr(r.poseLandmarks):null, world: ok? toArr(r.poseWorldLandmarks):null}; }
 
 const cv=$("cv"), ctx=cv.getContext("2d");
 function draw(src,lms,status){
@@ -344,12 +359,61 @@ function draw(src,lms,status){
 }
 function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className=cls; }
 
+// ---------------------------------------------------------------- 手のひらの合図
+// 手のひらをカメラに向けて、指を開いて上に向けた状態を「スタートの合図」にする。
+// 手の向き(手のひらか手の甲か)は、左右どちらの手かと、親指側・小指側の位置関係から判断する。
+// ※手の検出は「鏡に映った画像」を前提に左右を返すので、背面カメラ(鏡写しでない)では左右が逆になる。
+let hands=null, lastHands=null;
+async function initHands(){
+  if(hands) return hands;
+  if(!window.Hands) await loadScript(HCDN+"hands.js");
+  hands=new Hands({locateFile:f=>HCDN+f});
+  hands.setOptions({maxNumHands:2, modelComplexity:0, minDetectionConfidence:0.6, minTrackingConfidence:0.5});
+  hands.onResults(r=>{ lastHands=r; });
+  await withTimeout(hands.initialize(), 60000, "手の検出の準備に時間がかかりすぎています。通信環境を確認してください。");
+  return hands;
+}
+function dist2(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+// lm: 21点の手の位置 / label: 検出が返した左右("Left"/"Right") / mirrored: 画像が鏡写しか
+function isPalm(lm,label,mirrored=false){
+  const W=lm[0];
+  // 4本の指がまっすぐ伸びている(指先が第2関節より手首から遠い)
+  const ext=[[8,6],[12,10],[16,14],[20,18]].every(([tip,pip])=>dist2(lm[tip],W)>dist2(lm[pip],W)*1.1);
+  if(!ext) return false;
+  // 指先が上を向いている(手首より上)
+  if(!([8,12,16,20].every(i=>lm[i].y<W.y))) return false;
+  // 手のひらがカメラ側を向いている
+  const trueRight = mirrored? label==="Right" : label==="Left";
+  const indexLeft = lm[5].x < lm[17].x;   // 人さし指の付け根が、小指の付け根より画面の左
+  return trueRight===indexLeft;
+}
+window.isPalm=isPalm;
+
 // ---------------------------------------------------------------- ライブ(カメラ)の流れ
 // 直近の映像の関節を貯め、0.5秒ごとに「終わったスイング」がないか探す。
 // 構えて止まったら「チェック開始」と伝え、フィニッシュから約1.2秒後に結果を伝える。
 class Live{
-  constructor(ratio){ this.buf=[]; this.ratio=ratio; this.lastImpactT=-1e9; this.lastCheck=0; this.armed=false; this.no=0; this.results=[]; }
+  constructor(ratio){ this.buf=[]; this.ratio=ratio; this.lastImpactT=-1e9; this.lastCheck=0; this.armed=false; this.armedAt=-1e9; this.no=0; this.results=[];
+    this.active=false; this.palmSince=null; this.lastBodyT=0; }
+  // 手のひらが見えたかどうかを毎回受け取る。約0.8秒続いたらスタート
+  palm(t,seen){
+    if(this.active) return;
+    if(!seen){ this.palmSince=null; return; }
+    if(this.palmSince===null) this.palmSince=t;
+    if(t-this.palmSince>=800) this.start(t);
+  }
+  start(t){
+    this.active=true; this.palmSince=null; this.lastBodyT=t; this.armed=false; this.buf=[];
+    setStatus("スタート(構えるとチェック)","ready"); speak("スタート。打席で構えると、チェックを始めます。");
+  }
+  sleep(){
+    this.active=false; this.armed=false; this.buf=[];
+    setStatus("手のひらを見せるとスタート","wait"); speak("一時停止しました。再開するときは、カメラに手のひらを見せてください。");
+  }
   push(t,img,world){
+    if(!this.active) return;
+    if(img) this.lastBodyT=t;
+    else if(t-this.lastBodyT>SLEEP_AFTER){ this.sleep(); return; }
     this.buf.push({t,img,world}); while(this.buf.length && t-this.buf[0].t>9000) this.buf.shift();
     this.checkAddress(t);
     if(t-this.lastCheck>500){ this.lastCheck=t; this.scan(t); }
@@ -363,7 +427,7 @@ class Live{
     const still=(Math.max(...wy)-Math.min(...wy))<0.03 && (Math.max(...wx)-Math.min(...wx))<0.03;
     const f=recent[recent.length-1].img, hipY=(f[L_HIP][1]+f[R_HIP][1])/2;
     const imgM=aspect([f],this.ratio)[0];
-    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; setStatus("チェック中","busy"); speak("チェック開始"); }
+    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; this.armedAt=t; setStatus("チェック中","busy"); speak("チェック開始"); }
   }
   voiceFor(r){
     // 同じ課題が続くときは短く。練習ドリルは、課題が変わったときと5本ごとに伝える
@@ -381,6 +445,9 @@ class Live{
     for(const [lo,hi,p] of findSwings(imgM,fps)){
       const tImp=b[p].t;
       if(tImp<=this.lastImpactT+1500 || t-tImp<1200) continue;   // もう伝えた / まだフィニッシュ中
+      if(!this.armed || tImp<this.armedAt) continue;               // 構え(チェック開始)のあとのスイングだけ
+      const seen=b.slice(lo,Math.min(hi,b.length)).filter(f=>f.img).length;
+      if(seen<0.7*(Math.min(hi,b.length)-lo)) continue;            // 途中で体が映っていない
       this.lastImpactT=tImp; this.armed=false;
       try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); renderResult(r);
         speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r))); }
@@ -394,7 +461,7 @@ let running=false, stream=null, live=null, wakeLock=null;
 // テスト用: 関節データを実際の時間どおりに流し込んで、ライブの流れを確かめる
 window.simulateLive=function(frames,fps,ratio){
   const L=new Live(ratio); live=L;
-  frames.forEach((f,i)=>L.push(i*1000/fps, f.img, f.world));
+  frames.forEach((f,i)=>{ const t=i*1000/fps; L.palm(t,!!f.palm); L.push(t, f.img, f.world); });
   return L.results.map(r=>({no:r.no,t:r.t,faceOn:r.faceOn,m:r.m,keys:r.keys,voice:r.voiceText}));
 };
 async function startCamera(){
@@ -408,12 +475,29 @@ async function startCamera(){
   setStatus("姿勢推定を準備中…","wait");
   try{ await initPose(); }catch(e){ fail(e.message); return; }
   try{ wakeLock=await navigator.wakeLock?.request("screen"); }catch(e){}
+  setStatus("手の検出を準備中…","wait");
+  try{ await initHands(); }catch(e){ fail(e.message); return; }
   live=new Live(v.videoWidth/v.videoHeight); running=true;
-  setStatus("待機中(構えると開始)","wait"); speak("準備ができました。構えるとチェックを始めます。");
+  setStatus("手のひらを見せるとスタート","wait");
+  speak("準備ができました。スマホを置いたら、カメラに手のひらを見せてください。");
+  let n=0;
   const loop=async()=>{ if(!running) return;
-    await pose.send({image:v}); const r=lastResults;
-    live.push(performance.now(), toArr(r&&r.poseLandmarks), toArr(r&&r.poseWorldLandmarks));
-    draw(v, toArr(r&&r.poseLandmarks));
+    const t=performance.now();
+    if(!live.active){
+      // 手のひら待ちの間は、手の検出だけを動かす(電池と処理の節約)
+      if(n++%2===0){ await hands.send({image:v}); const r=lastHands; let seen=false;
+        if(r&&r.multiHandLandmarks) r.multiHandLandmarks.forEach((lm,i)=>{ const lab=r.multiHandedness?.[i]?.label; if(isPalm(lm,lab,false)) seen=true; });
+        live.palm(t,seen);
+        if(seen && !live.active) setStatus("手のひらを確認中…","busy");
+        else if(!live.active) setStatus("手のひらを見せるとスタート","wait"); }
+      draw(v,null); requestAnimationFrame(loop); return;
+    }
+    await pose.send({image:v}); const L=landmarks(lastResults);
+    live.push(t, L.img, L.world);
+    draw(v, L.img);
+    if(!live.active){ requestAnimationFrame(loop); return; }
+    if(!L.img && !live.armed) setStatus("全身が映るように立ってください","wait");
+    else if(!live.armed && $("status").textContent!=="待機中(構えると開始)") setStatus("待機中(構えると開始)","wait");
     const f=live.fps(); if(f<12 && live.buf.length>60 && !live.warned){ live.warned=true; speak("処理が追いついていません。解析の細かさを軽いにしてください。"); }
     requestAnimationFrame(loop); };
   loop();
@@ -447,9 +531,9 @@ async function analyzeFile(file){
     setStatus("姿勢推定を準備中…","wait"); await initPose();
     const dur=v.duration; if(!isFinite(dur)||dur<=0) throw new Error("動画の長さを読み取れませんでした。");
     const raw=[];
-    const record=async t=>{ await pose.send({image:v}); const r=lastResults;
-      raw.push({t, img:toArr(r&&r.poseLandmarks), world:toArr(r&&r.poseWorldLandmarks)});
-      draw(v,toArr(r&&r.poseLandmarks)); setStatus(`解析中 ${Math.round(t/dur*100)}%`,"busy"); };
+    const record=async t=>{ await pose.send({image:v}); const L=landmarks(lastResults);
+      raw.push({t, img:L.img, world:L.world});
+      draw(v,L.img); setStatus(`解析中 ${Math.round(t/dur*100)}%`,"busy"); };
     v.currentTime=0;
     if("requestVideoFrameCallback" in v && !window.PLAYBACK_RATE){
       // 1コマ映るたびに一時停止 → 解析 → 再生、をくり返す(コマを取りこぼさない)
@@ -481,6 +565,8 @@ async function analyzeFile(file){
     var fps=30, frames=resample(raw,fps,dur);
   }catch(e){ fail(e.message); return; }
   const v=$("vid");
+  const validRate=frames.filter(f=>f.img).length/Math.max(1,frames.length);
+  if(validRate<0.3){ fail("動画の中に、全身が映っている人を見つけられませんでした。頭から足まで入るように撮ってください。"); return; }
   const img=fillSmooth(frames.map(f=>f.img)), world=fillSmooth(frames.map(f=>f.world));
   const results=[];
   if(img){ const ratio=v.videoWidth/v.videoHeight, imgM=aspect(img,ratio);
