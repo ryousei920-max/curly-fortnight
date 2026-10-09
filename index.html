@@ -22,24 +22,64 @@ button:disabled{opacity:.5}
 #stage canvas{width:100%;display:block}
 #status{position:absolute;left:10px;top:10px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;font-weight:700}
 #status.ready{color:var(--accent)}
-#guide{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%);color:#fff;font-size:22px;font-weight:800;line-height:1.45;text-align:center;display:none}
+#bottom{position:absolute;left:0;right:0;bottom:0}
+#guide{padding:14px 16px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%);color:#fff;font-size:22px;font-weight:800;line-height:1.45;text-align:center;display:none}
+#demoMini{border-radius:10px;background:#0b110e;border:1px solid var(--line)}
+#bodyStop{display:none}
+/* 体チェック中: 画面いっぱい。上7割=カメラ、下3割=お手本と指示 */
+body.bodymode{overflow:hidden}
+body.bodymode #stage{position:fixed;inset:0;z-index:50;border-radius:0;display:flex!important;flex-direction:column;background:#000}
+body.bodymode #cv{flex:7 1 0;min-height:0;width:100%;height:0;object-fit:contain}
+body.bodymode #bottom{position:static;flex:3 1 0;min-height:0;display:flex;gap:10px;align-items:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#0b110e;border-top:1px solid var(--line)}
+body.bodymode #demoMini{flex:0 0 42%;width:42%;height:auto;max-height:100%;object-fit:contain}
+body.bodymode #guide{flex:1;background:none;padding:0;font-size:19px;text-align:left}
+body.bodymode #guide small{font-size:34px}
+body.bodymode #bodyStop{display:block;position:absolute;top:calc(8px + env(safe-area-inset-top));right:8px;width:auto;padding:8px 14px;background:rgba(0,0,0,.6);border-color:#555}
 #guide small{display:block;font-size:44px;color:var(--accent);line-height:1.1}#status.wait{color:var(--sub)}#status.busy{color:var(--warn)}
 .res h3{margin:0 0 8px;font-size:16px}
 .res ul{margin:6px 0 0;padding-left:18px}
 details{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
 summary{cursor:pointer;color:var(--accent);font-size:14px}
-details p{font-size:13px;line-height:1.6;margin:6px 0}.res li{margin:4px 0;line-height:1.5}
+details p{font-size:13px;line-height:1.6;margin:6px 0}
+.hc{position:relative;margin:10px 0 14px}
+.hc h4{margin:0;font-size:14px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.hc h4 b{font-size:18px;font-variant-numeric:tabular-nums}
+.hc svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.hc .tip{position:absolute;pointer-events:none;background:#0b110e;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;white-space:nowrap;display:none;transform:translate(-50%,-110%)}
+#histTable table{border-collapse:collapse;font-size:12px;width:100%}
+#histTable th,#histTable td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right;white-space:nowrap}
+#histTable th:first-child,#histTable td:first-child{text-align:left}.res li{margin:4px 0;line-height:1.5}
 .metric{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dashed var(--line);padding:4px 0}
 .metric b{font-variant-numeric:tabular-nums}
 .ok{color:var(--accent)}.ng{color:var(--bad)}
 small,.note{color:var(--sub);font-size:12px;line-height:1.6}
 #log{white-space:pre-wrap;font-size:11px;color:var(--sub)}
+#hdrLv{margin-left:auto;background:#16a34a;color:#fff;font-weight:800;border-radius:999px;padding:2px 10px;font-size:13px}
+#game .gm{display:flex;align-items:center;gap:10px}
+#game .bubble{position:relative;flex:1;background:#223028;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:14px;line-height:1.5}
+#game .bubble:before{content:"";position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-right-color:var(--line);border-left:0}
+#game .lvrow{display:flex;gap:8px;align-items:baseline;margin-top:8px;font-size:13px;color:var(--sub)}#game .lvrow b{font-size:20px;color:var(--text)}#game .sp{flex:1}
+#game .bar{height:10px;border-radius:999px;background:#0b110e;border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}#game .bar i{display:block;height:100%;background:linear-gradient(90deg,#16a34a,#4ade80);transition:width .6s}
+#game .bdg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#game .bdg span{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:#55685c}#game .bdg span.on{color:#06210f;background:#fbbf24;border-color:#fbbf24;font-weight:700}
+.lvup{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lvup .lvbox{text-align:center;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}.lvup h2{margin:6px 0 2px;font-size:30px;color:#fbbf24}.lvup p{margin:0 0 6px;font-size:18px}
+.lvup>i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 2.4s linear forwards}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 </style>
 </head>
 <body>
-<header><h1>スイングコーチ</h1><span>後ろからの撮影用・試作版</span></header>
+<header><h1>スイングコーチ</h1><span>後ろからの撮影用・試作版</span><span id="hdrLv">Lv1</span></header>
 <main>
+  <div class="card" id="game"></div>
   <div class="card" id="setup">
+    <label for="place">練習する場所</label>
+    <select id="place"><option value="range">打ちっぱなし(ボールを打つ)</option><option value="home">在宅練習(素振り・クラブなしでもOK)</option></select>
+    <div id="homeNote" class="note" style="display:none;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0b110e">
+      🏠 在宅練習モード: クラブを持たない素振りでも分析します。できればタオルを丸めたものや、短い棒(グリップ練習器など)を握るのがおすすめです。手の形が本番に近くなります。<br>
+      ・振る前に天井・照明・家具・人との距離を確認してください。狭い部屋なら、何も持たずに振るのが安全です。<br>
+      ・クラブの重さがないぶん、打ちっぱなしとは数値が少し変わります。記録は「在宅」として分けて保存し、上級者モードは在宅どうしで比べます。<br>
+      ・天井が低くて手が肩まで上がらない、小さめの素振りも1球として数えます。
+    </div>
     <label for="theme">今日の練習テーマ</label>
     <select id="theme">
       <option value="全部">全部</option><option value="前傾">前傾(起き上がり・伸び上がり)</option>
@@ -54,6 +94,7 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     </div>
     <label for="quality">解析の細かさ</label>
     <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select>
+    <div id="suggest" class="note" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0b110e;color:var(--text)"></div>
     <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。スマホを置いたら、近く(1〜2m)でカメラに手のひらを見せるとスタート。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。続けて打つときは合図なしでOK。1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</p>
     <label for="camSwing">カメラ</label>
     <select id="camSwing"><option value="environment">外カメ(画質が良い・おすすめ)</option><option value="user">インカメ(画面を見ながら使える)</option></select>
@@ -88,12 +129,24 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     <div id="bodyBaseView" class="note" style="margin-top:8px"></div>
   </div>
 
-  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div><div id="guide"></div><canvas id="demoMini" width="160" height="120" style="position:absolute;right:8px;top:8px;width:160px;height:120px;border-radius:10px;background:rgba(11,17,14,.85);border:1px solid var(--line);display:none"></canvas></div>
+  <div id="stage"><canvas id="cv"></canvas><div id="status" class="wait">準備中…</div>
+    <div id="bottom"><canvas id="demoMini" width="320" height="240" style="display:none"></canvas><div id="guide"></div></div>
+    <button id="bodyStop">終了</button></div>
   <div class="row" id="ctrl" style="display:none;margin-top:10px"><button id="flip">カメラ切替(イン⇔外)</button><button id="stop">終了</button></div>
 
   <div id="results"></div>
   <div class="card"><small>数値はスマホ1台の映像からの推定です。ストレッチは反動をつけず、痛みの出ない範囲で行ってください。</small>
-    <div class="row" style="margin-top:8px"><button id="clearHist">記録を消す</button></div>
+    <div class="row" style="margin-top:8px"><button id="showHist">記録を見る</button><button id="clearHist">記録を消す</button></div>
+  </div>
+  <div class="card" id="histView" style="display:none">
+    <h3 style="margin:0 0 4px;font-size:16px">上達の記録</h3>
+    <p class="note" style="margin:0 0 6px">1日ごとの中央値です。灰色の帯がプロの目安。点を押すと、その日の数値が出ます。</p>
+    <div id="histCharts"></div>
+    <details><summary>表で見る</summary><div id="histTable" style="overflow-x:auto"></div></details>
+    <h3 style="margin:16px 0 4px;font-size:16px">スイングの見直し(4コマ)</h3>
+    <p class="note" id="galInfo" style="margin:0 0 6px"></p>
+    <div id="gallery"></div>
+    <button id="galMore" style="display:none;margin-top:8px">もっと見る</button>
   </div>
   <div id="log"></div>
 </main>
@@ -210,7 +263,8 @@ function findSwings(imgM,fps){
   const sw=[];
   for(const p of peaks){
     const lo=Math.max(0,p-Math.round(0.8*fps)); if(p-lo<2) continue;
-    const top=argmin(wy,lo,p); if(wy[top]>=shy[top] || (p-top)>0.6*fps) continue;
+    const top=argmin(wy,lo,p), topLimit= (window.HOME_SWING? shy[top]+0.35*(hipy[top]-shy[top]) : shy[top]);   // 在宅は天井が低い部屋の小さめの素振りも数える
+    if(wy[top]>=topLimit || (p-top)>0.6*fps) continue;
     // トップの前(2.5秒以内)に、手が腰の高さ(アドレス)にあったこと … フィニッシュ後にクラブを下ろす動きを除く
     let low=false; for(let i=Math.max(0,top-Math.round(2.5*fps)); i<top; i++) if(wy[i]>=hipy[i]-0.03){ low=true; break; } if(!low) continue;
     const a=Math.max(0,p-Math.round(0.1*fps)), b=Math.min(n,p+Math.round(0.15*fps)+1);
@@ -288,10 +342,172 @@ function adviseStd(m,theme){
   else { pool=tips[theme]||[]; if(!pool.length) return [["",0,good[theme]]]; }
   return pool.sort((x,y)=>y[1]-x[1]).slice(0,2);
 }
+// ---------------------------------------------------------------- スイングの4コマ保存
+// ライブ中は、直前の約5秒ぶんを小さな画像で持っておき(使い回し・新しく作らない)、
+// 分析が終わったら アドレス/トップ/インパクト/フィニッシュ の4枚を1枚の画像(JPEG)にまとめて保存する。
+const SNAP_W=240, SNAP_N=48, SNAP_EVERY=110;   // 幅240px、0.11秒ごと、48枚 = 約5秒
+class SnapRing{
+  constructor(){ this.c=[]; this.t=[]; this.i=0; this.last=-1e9; }
+  grab(v,t){
+    if(t-this.last<SNAP_EVERY || !v.videoWidth) return; this.last=t;
+    let cv=this.c[this.i]; if(!cv){ cv=document.createElement("canvas"); this.c[this.i]=cv; }
+    const h=Math.round(SNAP_W*v.videoHeight/v.videoWidth); if(cv.width!==SNAP_W||cv.height!==h){ cv.width=SNAP_W; cv.height=h; }
+    cv.getContext("2d").drawImage(v,0,0,cv.width,cv.height); this.t[this.i]=t; this.i=(this.i+1)%SNAP_N;
+  }
+  nearest(t){ let best=-1; for(let k=0;k<this.t.length;k++){ if(this.t[k]===undefined) continue; if(best<0||Math.abs(this.t[k]-t)<Math.abs(this.t[best]-t)) best=k; }
+    return best>=0 && Math.abs(this.t[best]-t)<400? this.c[best] : null; }
+  clear(){ this.t=[]; this.last=-1e9; }
+}
+const snaps=new SnapRing();
+// 4枚(画像+骨格)を横に並べた1枚を作る。tiles: [{src, lms, label}]
+function composeStrip(tiles,flip){
+  const w=SNAP_W, h=Math.round(w*(tiles[0].src.height/tiles[0].src.width));
+  const out=document.createElement("canvas"); out.width=w*tiles.length; out.height=h; const c=out.getContext("2d");
+  tiles.forEach((tl,i)=>{
+    c.save(); c.translate(i*w,0); if(flip){ c.translate(w,0); c.scale(-1,1); }
+    c.drawImage(tl.src,0,0,w,h);
+    if(tl.lms){ c.lineWidth=2; c.strokeStyle="#4ade80"; for(const [a,b] of BONES){ c.beginPath(); c.moveTo(tl.lms[a][0]*w,tl.lms[a][1]*h); c.lineTo(tl.lms[b][0]*w,tl.lms[b][1]*h); c.stroke(); } }
+    c.restore();
+    c.fillStyle="rgba(0,0,0,.55)"; c.fillRect(i*w,0,w,22); c.fillStyle="#fff"; c.font="bold 13px sans-serif"; c.fillText(tl.label,i*w+6,16);
+    if(i>0){ c.fillStyle="#0f1512"; c.fillRect(i*w-1,0,2,h); }
+  });
+  return out;
+}
+const PHASE_LABEL=["アドレス","トップ","インパクト","フィニッシュ"];
+function stripBlob(cv){ return new Promise(r=>cv.toBlob(b=>r(b),"image/jpeg",0.72)); }
+// 保存先: IndexedDB(写真のような大きめのデータ向け。消さない限りスマホに残る)
+const SWING_KEEP=150;   // これより古いものから自動で消す(約12MBまで)
+let dbp=null;
+function idb(){ if(dbp) return dbp;
+  dbp=new Promise((ok,ng)=>{ try{ const q=indexedDB.open("swingcoach",1);
+    q.onupgradeneeded=()=>q.result.createObjectStore("swings",{keyPath:"id",autoIncrement:true});
+    q.onsuccess=()=>ok(q.result); q.onerror=()=>ng(q.error); }catch(e){ ng(e); } });
+  return dbp; }
+async function idbDo(mode,fn){ const db=await idb(); return new Promise((ok,ng)=>{ const tx=db.transaction("swings",mode), st=tx.objectStore("swings"); const r=fn(st); tx.oncomplete=()=>ok(r&&r.result); tx.onerror=()=>ng(tx.error); }); }
+async function saveSwing(rec){
+  try{ const id=await idbDo("readwrite",st=>st.add(rec));
+    const keys=await idbDo("readonly",st=>st.getAllKeys());
+    if(keys.length>SWING_KEEP) await idbDo("readwrite",st=>{ keys.slice(0,keys.length-SWING_KEEP).forEach(k=>st.delete(k)); });
+    return id; }catch(e){ log("save swing failed",e.message); return null; }
+}
+async function listSwings(){ try{ return (await idbDo("readonly",st=>st.getAll())).reverse(); }catch(e){ return []; } }
+async function deleteSwing(id){ try{ await idbDo("readwrite",st=>st.delete(id)); }catch(e){} }
+async function clearSwings(){ try{ await idbDo("readwrite",st=>st.clear()); }catch(e){} }
+window.listSwings=listSwings;
+// 結果カードに4コマを付けて、保存もする
+async function attachStrip(el,r,cv){
+  const blob=await stripBlob(cv); if(!blob) return;
+  const url=URL.createObjectURL(blob);
+  const fig=document.createElement("img"); fig.src=url; fig.alt=`${r.no}本目の4コマ`; fig.style.cssText="width:100%;border-radius:10px;margin:6px 0;display:block";
+  el.querySelector("h3").after(fig);
+  await saveSwing({t:Date.now(), blob, text:r.text, keys:r.keys, theme:$("theme").value});
+  window.stripsSaved=(window.stripsSaved||0)+1;
+}
+
+// ---------------------------------------------------------------- 上達の記録・今日のおすすめ
+const TREND=[
+  {k:"spine_loss", name:"インパクトでの起き上がり", unit:"度", good:[0,8], better:"low"},
+  {k:"early_ext", name:"伸び上がり(腰がボール側へ)", unit:"", good:[0,0.05], better:"low"},
+  {k:"path_loop", name:"手の通り道(プラス=外から)", unit:"", good:[-0.3,0], better:"low"},
+  {k:"shoulder_turn", name:"肩の回転", unit:"度", good:[85,100], better:"high", min:30},
+];
+const dayKey=t=>{ const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+function dailySummary(rows){
+  const by={}; for(const r of rows){ (by[dayKey(r.t)]=by[dayKey(r.t)]||[]).push(r); }
+  return Object.keys(by).sort().map(day=>{ const rs=by[day], o={day,n:rs.length,home:rs.filter(r=>r.place==="home").length};
+    for(const T of TREND){ const vs=rs.map(r=>r[T.k]).filter(v=>num(v) && (T.min===undefined || v>=T.min)); o[T.k]= vs.length? median(vs) : null; o[T.k+"_n"]=vs.length; }
+    return o; });
+}
+window.dailySummary=dailySummary;
+function fmtV(T,v){ return v===null||v===undefined? "-" : (T.unit==="度"? `${Math.round(v)}度` : v.toFixed(2)); }
+// 1本の折れ線(1日1点)。灰色の帯=プロの目安。点を押すと数値が出る
+function lineChart(box,T,days){
+  const W=340,H=130,L=34,R=8,Tp=8,B=22;
+  const pts=days.map((d,i)=>({i,d,v:d[T.k]})).filter(p=>p.v!==null);
+  const vals=pts.map(p=>p.v).concat(T.good);
+  let lo=Math.min(...vals), hi=Math.max(...vals); const pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
+  const n=Math.max(1,days.length-1), X=i=>L+(W-L-R)*(days.length===1?0.5:i/n), Y=v=>Tp+(H-Tp-B)*(1-(v-lo)/(hi-lo));
+  const last=pts[pts.length-1];
+  const tick=v=>T.unit==="度"? Math.round(v) : v.toFixed(2);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${T.name}の推移">`;
+  svg+=`<rect x="${L}" y="${Y(T.good[1])}" width="${W-L-R}" height="${Math.max(1,Y(T.good[0])-Y(T.good[1]))}" fill="#9db3a6" opacity=".14"/>`;
+  for(const v of [lo+pad,hi-pad]) svg+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#2b3a31" stroke-width="1"/><text x="${L-4}" y="${Y(v)+4}" fill="#9db3a6" font-size="10" text-anchor="end">${tick(v)}</text>`;
+  const lab=[0,days.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  for(const i of lab) svg+=`<text x="${X(i)}" y="${H-6}" fill="#9db3a6" font-size="10" text-anchor="${days.length===1?'middle':(i===0?'start':'end')}">${days[i].day.slice(5).replace("-","/")}</text>`;
+  if(pts.length>1) svg+=`<polyline fill="none" stroke="#16a34a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>`${X(p.i)},${Y(p.v)}`).join(" ")}"/>`;
+  svg+=`<line class="cross" x1="0" x2="0" y1="${Tp}" y2="${H-B}" stroke="#9db3a6" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  for(const p of pts) svg+=`<circle cx="${X(p.i)}" cy="${Y(p.v)}" r="4.5" fill="#16a34a" stroke="#18211c" stroke-width="2"/>`;
+  svg+=`</svg>`;
+  const trend= pts.length>=2? (()=>{ const d=last.v-pts[0].v, better=(T.better==="low"? d<0 : d>0); const big=Math.abs(d)>=(SCALE[T.k]||0.1)*0.5;
+    return big? (better? "✓ 良くなっています" : "△ 前より崩れています") : "横ばい"; })() : "";
+  box.innerHTML=`<h4><span>${T.name}</span><b>${last? fmtV(T,last.v):"-"}</b></h4><div class="note" style="margin:0">目安 ${fmtV(T,T.good[0])}〜${fmtV(T,T.good[1])}${trend? " ・ "+trend:""}</div>${svg}<div class="tip"></div>`;
+  const el=box.querySelector("svg"), tip=box.querySelector(".tip"), cross=box.querySelector(".cross");
+  const show=e=>{ if(!pts.length) return; const r=el.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*W;
+    const p=pts.reduce((a,b)=>Math.abs(X(b.i)-x)<Math.abs(X(a.i)-x)?b:a);
+    cross.setAttribute("x1",X(p.i)); cross.setAttribute("x2",X(p.i)); cross.setAttribute("visibility","visible");
+    tip.textContent=`${p.d.day.slice(5).replace("-","/")}  ${fmtV(T,p.v)}(${p.d[T.k+"_n"]}本)`;
+    tip.style.display="block"; tip.style.top=(Y(p.v)/H*r.height)+"px";
+    const half=tip.offsetWidth/2, x0=X(p.i)/W*r.width;
+    tip.style.left=Math.max(half, Math.min(r.width-half, x0))+"px"; };   // 端で切れないように
+  el.addEventListener("pointermove",show); el.addEventListener("pointerdown",show);
+  el.addEventListener("pointerleave",()=>{ tip.style.display="none"; cross.setAttribute("visibility","hidden"); });
+}
+let galLimit=10;
+async function renderGallery(){
+  const all=await listSwings(), box=$("gallery");
+  const mb=all.reduce((s,x)=>s+(x.blob?x.blob.size:0),0)/1048576;
+  $("galInfo").textContent= all.length? `保存しているスイング ${all.length}本(約${mb.toFixed(1)}MB・新しい${SWING_KEEP}本まで残ります)` : "まだ保存したスイングはありません。カメラや動画で分析すると、4コマがここにたまります。";
+  box.innerHTML="";
+  for(const x of all.slice(0,galLimit)){
+    const d=new Date(x.t), when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    const card=document.createElement("div"); card.style.cssText="border-top:1px solid var(--line);padding:8px 0";
+    const img=document.createElement("img"); img.src=URL.createObjectURL(x.blob); img.alt=when+"のスイング"; img.style.cssText="width:100%;border-radius:8px;display:block";
+    card.innerHTML=`<div class="note" style="display:flex;justify-content:space-between;margin:0 0 4px"><span>${when}${x.theme&&x.theme!=="全部"?" ・ テーマ: "+x.theme:""}</span><a href="#" style="color:var(--sub)">消す</a></div>`;
+    card.appendChild(img);
+    if(x.text&&x.text[0]){ const p=document.createElement("p"); p.className="note"; p.style.margin="4px 0 0"; p.textContent=x.text[0]; card.appendChild(p); }
+    card.querySelector("a").onclick=async e=>{ e.preventDefault(); if(confirm("このスイングを消しますか?")){ await deleteSwing(x.id); renderGallery(); } };
+    box.appendChild(card);
+  }
+  $("galMore").style.display= all.length>galLimit? "block":"none";
+}
+function renderHistory(){
+  galLimit=10; renderGallery();
+  const days=dailySummary(history()).slice(-30), box=$("histCharts");
+  if(!days.length){ box.innerHTML='<p class="note">まだ記録がありません。スイングを分析すると、ここに日ごとの変化が出ます。</p>'; $("histTable").innerHTML=""; return; }
+  box.innerHTML=""; for(const T of TREND){ const d=document.createElement("div"); d.className="hc"; box.appendChild(d); lineChart(d,T,days); }
+  $("histTable").innerHTML=`<table><tr><th>日付</th><th>本数</th>${TREND.map(T=>`<th>${T.name.replace(/\(.*\)/,"")}</th>`).join("")}</tr>`+
+    days.slice().reverse().map(d=>`<tr><td>${d.day.slice(5).replace("-","/")}</td><td>${d.n}${d.home?` <small>(🏠${d.home})</small>`:""}</td>${TREND.map(T=>`<td>${fmtV(T,d[T.k])}</td>`).join("")}</tr>`).join("")+`</table>`;
+}
+// 前回(最後に練習した日)の一番多い課題から、今日のテーマをおすすめする
+const ISSUE=[
+  {theme:"軌道", name:"手が外側から下りる動き", hit:r=>num(r.path_loop)&&r.path_loop>0.3},
+  {theme:"前傾", name:"インパクトでの起き上がり・伸び上がり", hit:r=>(num(r.spine_loss)&&r.spine_loss>8)||(num(r.early_ext)&&r.early_ext>0.1)},
+  {theme:"頭", name:"頭の上下", hit:r=>num(r.head_rise)&&Math.abs(r.head_rise)>0.12},
+  {theme:"回転", name:"肩の回転の浅さ", hit:r=>num(r.shoulder_turn)&&r.shoulder_turn>=30&&r.shoulder_turn<70},
+  {theme:"左腕", name:"トップでの左ひじの曲がり", hit:r=>num(r.lead_elbow)&&r.lead_elbow<150},
+];
+function suggestTheme(rows,today=dayKey(Date.now())){
+  const past=rows.filter(r=>dayKey(r.t)!==today); if(!past.length) return null;
+  const lastDay=dayKey(past[past.length-1].t), rs=past.filter(r=>dayKey(r.t)===lastDay);
+  if(rs.length<2) return null;
+  const counts=ISSUE.map(I=>({I,c:rs.filter(I.hit).length})).sort((a,b)=>b.c-a.c);
+  const top=counts[0]; if(top.c<Math.max(2,Math.ceil(rs.length*0.5))) return null;
+  return {theme:top.I.theme, name:top.I.name, c:top.c, n:rs.length, day:lastDay};
+}
+window.suggestTheme=suggestTheme;
+function showSuggest(){
+  const s=suggestTheme(history()), el=$("suggest"); if(!s){ el.style.display="none"; return; }
+  $("theme").value=s.theme;
+  el.style.display="block";
+  el.innerHTML=`💡 前回(${s.day.slice(5).replace("-","/")})は「${s.name}」が${s.n}本中${s.c}本でした。今日のテーマは<b>「${s.theme}」</b>がおすすめです(選択済み・変更もできます)。`;
+}
+
 function history(){ try{ return JSON.parse(localStorage.getItem("swingHistory")||"[]"); }catch(e){ return []; } }
-function saveHistory(m){ try{ const h=history(); h.push({t:Date.now(),...m}); localStorage.setItem("swingHistory",JSON.stringify(h.slice(-200))); }catch(e){} }
+const curPlace=()=>{ const s=document.getElementById("place"); return s&&s.value==="home"? "home" : "range"; };
+const samePlace=(r,pl)=> (r.place||"range")===pl;
+function saveHistory(m){ try{ const h=history(); h.push({t:Date.now(),...m,place:curPlace()}); localStorage.setItem("swingHistory",JSON.stringify(h.slice(-1000))); }catch(e){} }
 function adviseAdvanced(m){
-  const rows=history().slice(-30), items=[], lines=[];
+  const pl=curPlace(), rows=history().filter(r=>samePlace(r,pl)).slice(-30), items=[], lines=[];
   for(const k of Object.keys(ADV_DIR)){
     let vals=rows.map(r=>r[k]).filter(num); if(k==="shoulder_turn") vals=vals.filter(v=>v>=30);
     if(vals.length<5 || !num(m[k]) || (k==="shoulder_turn"&&m[k]<30)) continue;
@@ -328,6 +544,339 @@ function speak(text,rate){ log("SPEAK:",text);
   return Promise.race([end, new Promise(r=>setTimeout(r, Math.min(15000, 1500+text.length*250)))]);
 }
 
+// ---------------------------------------------------------------- ゲーム化(試作)  GAME-START
+// 経験値(XP)・レベル・連続日数・バッジ。記録はスマホの中(localStorage "progress")だけ。
+const XP={swing:10, swingDailyCap:100, ideal:30, better:15, firstOfDay:50, streakStep:10, streakMax:100, body:20};
+const levelTotal=n=>100*n*(n-1);                // レベルnになるのに必要な累計XP(Lv2=200, Lv5=2000, Lv10=9000, Lv20=38000)
+function levelOf(xp){ let n=1; while(xp>=levelTotal(n+1)) n++; return n; }
+const LEVEL_TITLE=[[1,"ルーキー"],[5,"練習生"],[10,"打ちっぱなし常連"],[20,"練習の鬼"],[30,"ベテラン"],[40,"レジェンド"]];   // 腕前ではなく「練習量」の称号
+const titleOf=n=>LEVEL_TITLE.filter(x=>n>=x[0]).pop()[1];
+const BADGES={
+  first:   ["はじめの1球","初めてスイングを記録"],
+  s10:     ["10球","スイングを10回記録"],
+  s100:    ["100球","スイングを100回記録"],
+  s500:    ["500球","スイングを500回記録"],
+  ideal1:  ["ナイスショット","課題なしのスイング"],
+  ideal10: ["安定感","課題なしを10回"],
+  st3:     ["3日連続","3日続けて練習"],
+  st7:     ["1週間連続","7日続けて練習"],
+  body1:   ["体チェック","初めての体チェック"],
+  home1:   ["おうち練習","在宅で素振りを記録"],
+  home100: ["おうち100球","在宅で100回素振り"],
+  lv5:     ["Lv5","レベル5に到達"],
+  lv10:    ["Lv10","レベル10に到達"],
+};
+// dayKey(日付の文字列)は上の「今日のまとめ」で定義済みのものを使う
+function newProg(){ return {xp:0,swings:0,homeSwings:0,ideal:0,streak:0,lastDay:"",today:"",todaySwings:0,bodyDay:"",badges:[],recent:[]}; }
+function loadProg(){ try{ return Object.assign(newProg(), JSON.parse(localStorage.getItem("progress")||"{}")); }catch(e){ return newProg(); } }
+function saveProg(p){ try{ localStorage.setItem("progress",JSON.stringify(p)); }catch(e){} }
+// その日最初の練習なら、連続日数を数えてボーナス
+function dayStart(p,now,gains){
+  const today=dayKey(now); if(p.today===today) return;
+  const yest=dayKey(now-864e5);
+  p.streak = (p.lastDay===yest)? p.streak+1 : 1;
+  p.lastDay=today; p.today=today; p.todaySwings=0;
+  gains.push(["今日の初練習",XP.firstOfDay]);
+  if(p.streak>1) gains.push([p.streak+"日連続",Math.min(XP.streakMax,XP.streakStep*p.streak)]);
+}
+function award(p,gains){
+  const before=levelOf(p.xp), add=gains.reduce((s,g)=>s+g[1],0);
+  p.xp+=add; const after=levelOf(p.xp);
+  const got=[]; const give=k=>{ if(!p.badges.includes(k)){ p.badges.push(k); got.push(k); } };
+  if(p.swings>=1) give("first"); if(p.swings>=10) give("s10"); if(p.swings>=100) give("s100"); if(p.swings>=500) give("s500");
+  if(p.ideal>=1) give("ideal1"); if(p.ideal>=10) give("ideal10");
+  if(p.streak>=3) give("st3"); if(p.streak>=7) give("st7");
+  if(p.bodyDay) give("body1"); if(p.homeSwings>=1) give("home1"); if(p.homeSwings>=100) give("home100"); if(after>=5) give("lv5"); if(after>=10) give("lv10");
+  return {gains,add,levelUp:after>before?after:0,badges:got,level:after};
+}
+// スイング1本ごと。keys=見つかった課題の一覧(空なら課題なし)
+function gameSwing(p,keys,now,place){
+  const gains=[]; dayStart(p,now,gains);
+  p.swings++; p.todaySwings++; if(place==="home") p.homeSwings=(p.homeSwings||0)+1;
+  if(p.todaySwings<=XP.swingDailyCap) gains.push(["スイング",XP.swing]);      // 1日100球分まで(連打で稼げないように)
+  const n=keys.length;
+  if(n===0){ p.ideal++; gains.push(["課題なし",XP.ideal]); }
+  else if(p.recent.length>=5){ const avg=p.recent.reduce((a,b)=>a+b,0)/p.recent.length; if(n<avg-0.5) gains.push(["いつもより良い",XP.better]); }
+  p.recent=p.recent.concat(n).slice(-10);
+  return award(p,gains);
+}
+// 体チェックは1日1回だけXP
+function gameBody(p,now){
+  const gains=[]; dayStart(p,now,gains);
+  const today=dayKey(now);
+  if(p.bodyDay!==today){ p.bodyDay=today; gains.push(["体チェック",XP.body]); }
+  return award(p,gains);
+}
+// GAME-END
+
+// ---------------------------------------------------------------- キャラクター「ボールくん」(オリジナル)
+// ゴルフボールの頭に緑の帽子。mood: normal / happy / cheer
+function mascotSVG(mood,size){
+  const eye = mood==="happy"? '<path d="M37 52q5-6 10 0M63 52q5-6 10 0" stroke="#1f2937" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+                            : '<ellipse cx="42" cy="52" rx="4.5" ry="6" fill="#1f2937"/><ellipse cx="68" cy="52" rx="4.5" ry="6" fill="#1f2937"/><circle cx="43.5" cy="49.5" r="1.6" fill="#fff"/><circle cx="69.5" cy="49.5" r="1.6" fill="#fff"/>';
+  const mouth = mood==="normal"? '<path d="M48 66q7 6 14 0" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round"/>'
+                               : '<path d="M45 63q10 14 20 0z" fill="#e11d48" stroke="#1f2937" stroke-width="2.5" stroke-linejoin="round"/>';
+  const arms = mood==="cheer"? '<path d="M18 70l-12-22M92 70l12-22" stroke="#f5f5f4" stroke-width="7" stroke-linecap="round"/><circle cx="6" cy="46" r="6" fill="#f5f5f4"/><circle cx="104" cy="46" r="6" fill="#f5f5f4"/>' : '';
+  const dimples=[[30,72],[38,82],[50,87],[62,86],[74,80],[82,70],[26,60],[86,58]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#d6d3d1"/>`).join("");
+  return `<svg viewBox="0 0 110 110" width="${size||56}" height="${size||56}" aria-hidden="true">${arms}
+<circle cx="55" cy="60" r="38" fill="#fafaf9" stroke="#d6d3d1" stroke-width="2"/>${dimples}
+<path d="M17 44q38-34 76 0z" fill="#16a34a"/><path d="M60 40q26-6 40 4q-14 4-40 0z" fill="#15803d"/><circle cx="55" cy="16" r="4" fill="#15803d"/>
+${eye}<ellipse cx="33" cy="64" rx="6" ry="3.5" fill="#fda4af" opacity=".8"/><ellipse cx="77" cy="64" rx="6" ry="3.5" fill="#fda4af" opacity=".8"/>${mouth}</svg>`;
+}
+const COACH_LINES={
+  idle:["今日も1球ずつ、いこう!","打つ前に「チェック開始」を待ってね","後ろから全身が入るように置こう"],
+  ideal:["ナイスショット!いまの形、覚えておこう","課題なし!その調子!","きれいなスイング!"],
+  better:["いつもより良くなってるよ!","課題が減ってきた!"],
+  normal:["1つずつ直していこう","いいね、もう1球!","数をこなすのも大事!"],
+};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function renderGame(mood,line){
+  const p=loadProg(), lv=levelOf(p.xp), lo=levelTotal(lv), hi=levelTotal(lv+1), pct=Math.round((p.xp-lo)/(hi-lo)*100);
+  const g=$("game"); if(!g) return;
+  g.innerHTML=`<div class="gm">${mascotSVG(mood||"normal",64)}<div class="bubble">${line||pick(COACH_LINES.idle)}</div></div>
+<div class="lvrow"><b>Lv${lv}</b><span>${titleOf(lv)}</span><span class="sp"></span><span>🔥${p.streak||0}日連続</span></div>
+<div class="bar"><i style="width:${pct}%"></i></div><div class="note">次のレベルまで ${hi-p.xp} XP ・ 今日 ${p.today===dayKey(Date.now())?p.todaySwings:0}球 ・ 累計 ${p.swings}球${p.homeSwings?`(うち在宅 ${p.homeSwings})`:""}</div>
+<div class="bdg">${Object.entries(BADGES).map(([k,[n,d]])=>`<span class="${p.badges.includes(k)?'on':''}" title="${d}">${n}</span>`).join("")}</div>`;
+  const hl=$("hdrLv"); if(hl) hl.textContent="Lv"+lv;
+}
+function levelUpShow(lv){
+  const o=document.createElement("div"); o.className="lvup";
+  const conf=Array.from({length:24},(_,i)=>`<i style="left:${(i*41)%100}%;animation-delay:${(i%6)*0.12}s;background:${["#4ade80","#fbbf24","#f472b6","#60a5fa"][i%4]}"></i>`).join("");
+  o.innerHTML=`${conf}<div class="lvbox">${mascotSVG("cheer",120)}<h2>レベルアップ!</h2><p>Lv${lv} 「${titleOf(lv)}」</p><small>タップで閉じる</small></div>`;
+  o.onclick=()=>o.remove(); document.body.appendChild(o); setTimeout(()=>o.remove(),3500);
+}
+// 結果をキャラのセリフ・画面・声(レベルアップ時だけ)に反映。声で言う文を返す
+function gameAfter(res,kind){
+  const p=loadProg();
+  let mood="normal", line=pick(COACH_LINES.normal);
+  if(kind==="ideal"){ mood="happy"; line=pick(COACH_LINES.ideal); }
+  else if(kind==="better"){ mood="happy"; line=pick(COACH_LINES.better); }
+  else if(kind==="body"){ mood="happy"; line="体チェックおつかれさま!"; }
+  line+= res.add? ` <b>+${res.add}XP</b>` : (kind==="body"? "<br><small>体チェックのXPは1日1回です</small>" : "");
+  if(res.badges.length) line+=`<br>バッジ獲得: ${res.badges.map(k=>BADGES[k][0]).join("・")}`;
+  renderGame(res.levelUp?"cheer":mood,line);
+  if(res.levelUp){ levelUpShow(res.levelUp); return `レベルアップ!レベル${res.levelUp}になりました。`; }
+  return "";
+}
+function gameOnSwing(keys){
+  const p=loadProg(), res=gameSwing(p,keys,Date.now(),curPlace()); saveProg(p);
+  return gameAfter(res, keys.length===0? "ideal" : res.gains.some(g=>g[0]==="いつもより良い")? "better" : "normal");
+}
+function gameOnBody(){ const p=loadProg(), res=gameBody(p,Date.now()); saveProg(p); return gameAfter(res,"body"); }
+
+// ---------------------------------------------------------------- 今日のまとめを「絵と動き」で見せる  VIZ-START
+// 1枚のキャンバス(縦長 720x1000)に、上=今のあなた(本人の骨格)、下=今の動きと目指す動きのアニメ、下端=練習ドリル。
+// 画像(PNG)・動画(6秒)で保存/共有できる。
+const VIZ_GROUP={spine_loss:"tilt",early_ext:"tilt",spine_addr:"tilt",over_top:"path",plane_under:"path",
+  head_rise:"head",head_sink:"head",shoulder_turn:"turn",xfactor:"turn",lead_elbow:"elbow"};
+const VIZ_TEXT={
+  tilt:{now:"インパクトで体が起き上がる",goal:"前傾の角度をキープ",tip:"胸を地面に向けたまま、お尻の位置を変えずに回る"},
+  path:{now:"手が外側(ボール側)から下りる",goal:"手は体の近くを通って下りる",tip:"切り返しで右ひじを右腰の前に落とす"},
+  head:{now:"インパクトで頭が上下する",goal:"頭の高さを変えない",tip:"打ったあともボールのあった場所を1秒見る"},
+  turn:{now:"肩の回転が浅い",goal:"背中が目標を向くまで回す",tip:"アドレスの前傾のまま、肩を約90度回す"},
+  elbow:{now:"トップで左ひじが曲がる",goal:"左腕を伸ばしたまま上げる",tip:"手を遠くに上げるイメージで、腕の長さを保つ"},
+};
+// 本人の骨格を保存(analyzeSwing から呼ぶ)。座標は縦横比補正済み(imgM)のまま、小数3桁に丸める
+function vizCapture(imgM,ph){
+  const P=f=>imgM[f].map(p=>[+p[0].toFixed(3),+p[1].toFixed(3)]);
+  const wr=f=>[(imgM[f][L_WR][0]+imgM[f][R_WR][0])/2,(imgM[f][L_WR][1]+imgM[f][R_WR][1])/2];
+  const path=[]; for(let f=ph.address; f<=Math.min(ph.finish,imgM.length-1); f++) path.push(wr(f).map(v=>+v.toFixed(3)));
+  return {A:P(ph.address),T:P(ph.top),I:P(ph.impact),path,ti:ph.top-ph.address,ii:ph.impact-ph.address};
+}
+// 今日いちばん多かった課題と、その代表の1本(課題の数値が真ん中くらいの1本)
+function pickFocus(rs){
+  const valid=rs.filter(r=>!r.faceOn && r.keys);
+  const cnt={}; valid.forEach(r=>[...new Set(r.keys)].forEach(k=>{ if(VIZ_GROUP[k]) cnt[k]=(cnt[k]||0)+1; }));
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; if(!top) return null;
+  const k=top[0], has=valid.filter(r=>r.keys.includes(k) && r.viz);
+  const metric={over_top:"path_loop",plane_under:"path_loop",head_sink:"head_rise",xfactor:"shoulder_turn"}[k]||k;
+  has.sort((a,b)=>(a.m[metric]??0)-(b.m[metric]??0));
+  return {key:k, group:VIZ_GROUP[k], count:top[1], total:valid.length, rep:has[Math.floor(has.length/2)]||null};
+}
+// ---- 描画の道具
+function wrapText(c,text,x,y,maxW,lh){ let line=""; for(const ch of text){ if(c.measureText(line+ch).width>maxW && line){ c.fillText(line,x,y); y+=lh; line=ch; } else line+=ch; } if(line) c.fillText(line,x,y); return y+lh; }
+function arrow(c,x1,y1,x2,y2,col,w){ c.strokeStyle=col; c.fillStyle=col; c.lineWidth=w; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  const a=Math.atan2(y2-y1,x2-x1), L=w*3.5; c.beginPath(); c.moveTo(x2,y2); c.lineTo(x2-L*Math.cos(a-0.5),y2-L*Math.sin(a-0.5)); c.lineTo(x2-L*Math.cos(a+0.5),y2-L*Math.sin(a+0.5)); c.closePath(); c.fill(); }
+// 本人の骨格を、枠(x,y,w,h)に収まるように描く
+function fitPose(pts,list,x,y,w,h){
+  let xs=[],ys=[]; for(const ps of list) for(const p of ps){ xs.push(p[0]); ys.push(p[1]); }
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const s=Math.min(w/(x1-x0+1e-6),h/(y1-y0+1e-6))*0.9, ox=x+w/2-(x0+x1)/2*s, oy=y+h/2-(y0+y1)/2*s;
+  return p=>[ox+p[0]*s, oy+p[1]*s];
+}
+function drawSkel(c,F,pts,col,lw){ c.strokeStyle=col; c.lineWidth=lw; c.lineCap="round";
+  for(const [a,b] of BONES){ const p=F(pts[a]),q=F(pts[b]); c.beginPath(); c.moveTo(p[0],p[1]); c.lineTo(q[0],q[1]); c.stroke(); }
+  const n=F(pts[NOSE]); c.fillStyle=col; c.beginPath(); c.arc(n[0],n[1],lw*1.6,0,7); c.fill(); }
+const mid=(pts,a,b)=>[(pts[a][0]+pts[b][0])/2,(pts[a][1]+pts[b][1])/2];
+// ---- 上段: 今のあなた(本人の骨格)
+function drawYou(c,fo,x,y,w,h){
+  const r=fo.rep, g=fo.group, m=r? r.m : {};
+  c.fillStyle="#e9f1ec"; c.font="bold 26px sans-serif"; c.textAlign="left"; c.fillText(`今のあなた${r?`(${r.no}本目)`:""}`,x,y+28);
+  if(!r){ c.fillStyle="#9db3a6"; c.font="20px sans-serif"; c.fillText("骨格のデータがありません",x,y+80); return; }
+  const V=r.viz, bx=x, by=y+44, bw=w*0.62, bh=h-56;
+  c.fillStyle="#0b110e"; c.fillRect(bx,by,bw,bh);
+  const red="#f87171", green="#4ade80", gray="rgba(233,241,236,.35)", white="#e9f1ec";
+  const tx=bx+bw+18, tw=w-bw-18; let ty=by+34; c.font="20px sans-serif";
+  const note=(t,col)=>{ c.fillStyle=col||white; ty=wrapText(c,t,tx,ty,tw,28)+6; };
+  if(g==="tilt"){
+    const F=fitPose(null,[V.A,V.I],bx,by,bw,bh);
+    drawSkel(c,F,V.A,gray,4); drawSkel(c,F,V.I,white,6);
+    const hA=F(mid(V.A,L_HIP,R_HIP)), sA=F(mid(V.A,L_SH,R_SH)), hI=F(mid(V.I,L_HIP,R_HIP)), sI=F(mid(V.I,L_SH,R_SH));
+    c.setLineDash([10,8]); c.strokeStyle=green; c.lineWidth=5; c.beginPath(); c.moveTo(hA[0],hA[1]); c.lineTo(sA[0],sA[1]); c.stroke(); c.setLineDash([]);
+    c.strokeStyle=red; c.lineWidth=6; c.beginPath(); c.moveTo(hI[0],hI[1]); c.lineTo(sI[0],sI[1]); c.stroke();
+    arrow(c,(sA[0]+hA[0]*0.3)/1.3,(sA[1]+hA[1]*0.3)/1.3,(sI[0]+hI[0]*0.3)/1.3,(sI[1]+hI[1]*0.3)/1.3,red,4);
+    note("緑の点線 = 構えたときの背中",green); note("赤の線 = インパクトの背中",red);
+    if(num(m.spine_addr)&&num(m.spine_loss)) note(`前傾 ${Math.round(m.spine_addr)}度 → ${Math.round(m.spine_addr-m.spine_loss)}度(${Math.round(m.spine_loss)}度起き上がり)`);
+    note("目安: 起き上がりは8度以内","#9db3a6");
+  } else if(g==="path"){
+    const F=fitPose(null,[V.A,V.path],bx,by,bw,bh);
+    drawSkel(c,F,V.A,gray,4);
+    const seg=(a,b,col)=>{ c.strokeStyle=col; c.lineWidth=6; c.beginPath(); V.path.slice(a,b+1).forEach((p,i)=>{ const q=F(p); i? c.lineTo(q[0],q[1]) : c.moveTo(q[0],q[1]); }); c.stroke(); };
+    seg(0,V.ti,"#60a5fa"); seg(V.ti,V.ii,red);
+    const q=F(V.path[Math.min(V.ii,V.path.length-1)]); c.fillStyle=red; c.beginPath(); c.arc(q[0],q[1],8,0,7); c.fill();
+    note("青 = 上げるときの手の通り道","#60a5fa"); note("赤 = 下ろすときの手の通り道",red);
+    note("赤が青よりボール側を通ると、外から下りています。");
+    note("目安: 赤が青の下か、同じくらいを通る","#9db3a6");
+  } else if(g==="head"){
+    const F=fitPose(null,[V.A,V.I],bx,by,bw,bh);
+    drawSkel(c,F,V.I,white,6);
+    const nA=F(V.A[NOSE]), nI=F(V.I[NOSE]);
+    c.setLineDash([10,8]); c.strokeStyle=green; c.lineWidth=3; c.beginPath(); c.moveTo(bx+10,nA[1]); c.lineTo(bx+bw-10,nA[1]); c.stroke(); c.setLineDash([]);
+    c.strokeStyle=green; c.lineWidth=4; c.beginPath(); c.arc(nA[0],nA[1],18,0,7); c.stroke();
+    arrow(c,nA[0],nA[1],nI[0],nI[1],red,4);
+    note("緑の丸と点線 = 構えたときの頭",green); note("赤の矢印 = インパクトまでに頭が動いた向き",red);
+    if(num(m.head_rise)) note(`頭の上下: ${m.head_rise>0?"上へ":"下へ"} 体の長さの${Math.round(Math.abs(m.head_rise)*100)}%`);
+  } else if(g==="turn"){
+    const F=fitPose(null,[V.T],bx,by,bw,bh); drawSkel(c,F,V.T,white,6);
+    const t=num(m.shoulder_turn)? Math.round(m.shoulder_turn) : null;
+    note("トップでの肩の回転"); c.font="bold 40px sans-serif"; c.fillStyle=red; c.fillText(t!==null? `${t}度`:"測れず",tx,ty+14); ty+=50; c.font="20px sans-serif";
+    // 目安との棒グラフ
+    const gw=tw-10; c.fillStyle="#223028"; c.fillRect(tx,ty,gw,18); c.fillStyle=red; c.fillRect(tx,ty,gw*Math.min(1,(t||0)/110),18);
+    c.fillStyle=green; c.fillRect(tx+gw*90/110-2,ty-6,4,30); ty+=48; note("緑の線 = 目安の約90度",green);
+  } else {
+    const F=fitPose(null,[V.T],bx,by,bw,bh); drawSkel(c,F,V.T,white,6);
+    const lead= $("hand").value==="L"? [R_SH,R_EL,R_WR] : [L_SH,L_EL,L_WR];
+    c.strokeStyle=red; c.lineWidth=8; c.beginPath(); lead.forEach((i,j)=>{ const q=F(V.T[i]); j? c.lineTo(q[0],q[1]) : c.moveTo(q[0],q[1]); }); c.stroke();
+    note("赤 = トップでの左腕",red); if(num(m.lead_elbow)) note(`左ひじの角度 ${Math.round(m.lead_elbow)}度`); note("目安: 160度以上(ほぼまっすぐ)","#9db3a6");
+  }
+}
+// ---- 下段: ボールくんが「今」と「目標」を同時に演じる(横から見た図)
+// 後ろ(飛球線後方)から見た手の通り道。構え→トップは曲線、下ろしは mode で外(bad)/内(good)に分ける
+function handOn(sh,R,v,mode){
+  const A=[sh[0]+0.32*R, sh[1]+0.95*R], T=[sh[0]-0.3*R, sh[1]-0.95*R];
+  const C= mode==="bad"? [sh[0]+0.35*R, sh[1]-0.15*R] : mode==="good"? [sh[0]-1.05*R, sh[1]+0.45*R] : [sh[0]-0.8*R, sh[1]+0.15*R];
+  const q=1-v; return [q*q*A[0]+2*q*v*C[0]+v*v*T[0], q*q*A[1]+2*q*v*C[1]+v*v*T[1]];   // v=0 構え, v=1 トップ
+}
+function bodyGeo(ox,oy,s,P){ const hip=[ox-8*s+(P.hipDX||0)*s,oy-105*s], t=P.tilt*Math.PI/180; return {hip, sh:[hip[0]+Math.sin(t)*82*s, hip[1]-Math.cos(t)*82*s], t}; }
+function golferHand(ox,oy,s,P){ const g=bodyGeo(ox,oy,s,P); return handOn(g.sh,80*s,P.arm,P.mode||"up"); }
+function trace(c,pts,col,w,dash){ c.strokeStyle=col; c.lineWidth=w; if(dash) c.setLineDash(dash); c.beginPath(); pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])); c.stroke(); c.setLineDash([]); }
+function golfer(c,ox,oy,s,P,col){
+  // P: tilt(前傾度) hipDX(お尻の前後) headDY(頭の上下) arm(0=下,1=トップ) loop(下ろす手の外側への膨らみ) elbow(1=伸びる)
+  c.lineCap="round"; c.lineJoin="round"; c.strokeStyle=col; c.lineWidth=12*s;
+  const foot=[ox,oy], knee=[ox+14*s,oy-55*s], {hip,sh,t}=bodyGeo(ox,oy,s,P);
+  const ln=(a,b)=>{ c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); };
+  ln([ox-18*s,oy],[ox+30*s,oy]); ln(foot,knee); ln(knee,hip); ln(hip,sh);
+  const hand=handOn(sh,80*s,P.arm,P.mode||"up");
+  const bend=1-(P.elbow??1), dx=hand[0]-sh[0], dy=hand[1]-sh[1], L=Math.hypot(dx,dy)||1;
+  const el=[(sh[0]+hand[0])/2+(-dy/L)*30*s*bend,(sh[1]+hand[1])/2+(dx/L)*30*s*bend];
+  const hand2= bend? [el[0]+(hand[0]-el[0])*0.8, el[1]+(hand[1]-el[1])*0.8] : hand;
+  ln(sh,el); ln(el,hand2);
+  const ca=(58+140*P.arm)*Math.PI/180, cl=95*s*(1-0.35*P.arm); c.strokeStyle="#9db3a6"; c.lineWidth=4*s; ln(hand2,[hand2[0]+Math.cos(ca)*cl,hand2[1]+Math.sin(ca)*cl]);   // クラブ: 構えはボールへ、トップは目標方向
+  ballHead(c,sh[0]+Math.sin(t)*30*s,sh[1]-Math.cos(t)*30*s+(P.headDY||0)*s,22*s,0);
+  return {hip,sh,hand};
+}
+function phaseArm(u){ // 0..1 のループ: 構え→トップ→インパクト→少し止まる
+  const e=x=>x<0.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+  if(u<0.15) return {arm:0,ph:0}; if(u<0.45) return {arm:e((u-0.15)/0.3),ph:1}; if(u<0.6) return {arm:1-e((u-0.45)/0.15),ph:2}; return {arm:0,ph:3};
+}
+function drawActing(c,fo,x,y,w,h,u){
+  const g=fo.group, T=VIZ_TEXT[g], half=w/2, base=y+h-40, s=1.05;
+  c.textAlign="center"; c.font="bold 22px sans-serif";
+  c.fillStyle="#f87171"; c.fillText("✕ 今の動き",x+half/2,y+28); c.fillStyle="#4ade80"; c.fillText("◯ 目指す動き",x+half+half/2,y+28);
+  const fit=(t,cx)=>{ let f=19; do{ c.font=f+"px sans-serif"; f--; }while(c.measureText(t).width>half-16 && f>12); c.fillStyle="#e9f1ec"; c.fillText(t,cx,y+58); };
+  fit(T.now,x+half/2); fit(T.goal,x+half+half/2);
+  c.textAlign="left";
+  const {arm,ph}=phaseArm(u), down=(ph>=2), k=ph===3?1:(ph===2? 1-arm : 0);   // k: インパクトに向けて悪い癖が出る度合い
+  for(const [bad,cx] of [[true,x+half/2],[false,x+half+half/2]]){
+    c.save(); c.beginPath(); c.rect(bad? x : x+half, y+68, half, h-68); c.clip();
+    const col= bad? "#fca5a5" : "#bbf7d0";
+    const P={tilt:38,hipDX:0,headDY:0,arm,loop:0,elbow:1};
+    if(g==="tilt" && bad){ P.tilt=38-20*k; P.hipDX=16*k; }
+    if(g==="head" && bad){ P.headDY=-22*k; }
+    if(g==="path" && down) P.mode= bad? "bad" : "good";
+    if(g==="elbow" && bad) P.elbow=1-0.8*arm;
+    if(g==="turn"){ drawTurnTop(c,cx,y+h/2+30,bad? 60:90,arm); c.restore(); continue; }
+    if(g==="path"){ const up=[],dn=[]; for(let i=0;i<=24;i++){ const v=i/24; up.push(golferHand(cx-30,base,s,{tilt:38,arm:v})); dn.push(golferHand(cx-30,base,s,{tilt:38,arm:1-v,mode:bad?"bad":"good"})); }
+      trace(c,up,"rgba(96,165,250,.8)",4,[6,6]); trace(c,dn,bad?"#f87171":"#4ade80",5); }
+    const fig=golfer(c,cx-30,base,s,P,col);
+    if(g==="tilt"){ c.setLineDash([8,7]); c.strokeStyle="#4ade80"; c.lineWidth=3; const hp=[cx-38,base-110*s]; const t=38*Math.PI/180; c.beginPath(); c.moveTo(hp[0],hp[1]); c.lineTo(hp[0]+Math.sin(t)*130,hp[1]-Math.cos(t)*130); c.stroke(); c.setLineDash([]); }
+    if(g==="head"){ c.setLineDash([8,7]); c.strokeStyle="#4ade80"; c.lineWidth=3; const hy=base-105*s-Math.cos(38*Math.PI/180)*112*s; c.beginPath(); c.moveTo(cx-110,hy); c.lineTo(cx+110,hy); c.stroke(); c.setLineDash([]); }
+    // ボール
+    c.fillStyle="#fafaf9"; c.beginPath(); c.arc(cx+70,base-4,7,0,7); c.fill();
+    c.restore();
+  }
+  c.strokeStyle="#2b3a31"; c.lineWidth=2; c.beginPath(); c.moveTo(x+half,y+10); c.lineTo(x+half,y+h-10); c.stroke();
+}
+// 上から見た肩の回転(回転の課題用)
+function drawTurnTop(c,cx,cy,maxDeg,u){
+  const a=maxDeg*u*Math.PI/180, R=95;
+  c.strokeStyle="#2b3a31"; c.lineWidth=2; c.beginPath(); c.arc(cx,cy,R+18,0,7); c.stroke();
+  c.strokeStyle="#9db3a6"; c.setLineDash([6,6]); c.beginPath(); c.moveTo(cx-R,cy); c.lineTo(cx+R,cy); c.stroke(); c.setLineDash([]);
+  c.strokeStyle= maxDeg<80? "#f87171" : "#4ade80"; c.lineWidth=16; c.lineCap="round";
+  c.beginPath(); c.moveTo(cx-R*Math.cos(a),cy-R*Math.sin(a)); c.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a)); c.stroke();
+  ballHead(c,cx,cy,30,0);
+  c.fillStyle="#e9f1ec"; c.font="bold 22px sans-serif"; c.textAlign="center"; c.fillText(`${Math.round(maxDeg*u)}度`,cx,cy+R+52); c.font="15px sans-serif"; c.fillStyle="#9db3a6"; c.fillText("上から見た肩",cx,cy-R-30); c.textAlign="left";
+}
+// ---- 1枚にまとめて描く
+function drawSummaryViz(c,fo,u){
+  const W=720,H=1000; c.fillStyle="#0f1512"; c.fillRect(0,0,W,H);
+  c.fillStyle="#16a34a"; c.fillRect(0,0,W,86);
+  c.drawImage(fo.mascot,14,8,70,70);
+  c.fillStyle="#fff"; c.font="bold 30px sans-serif"; c.textAlign="left"; c.fillText("今日のまとめ",96,40);
+  c.font="20px sans-serif"; c.fillText(`${fo.total}本中${fo.count}本: ${NAME[fo.key]||VIZ_TEXT[fo.group].now}`,96,72);
+  drawYou(c,fo,24,100,W-48,380);
+  c.strokeStyle="#2b3a31"; c.lineWidth=2; c.beginPath(); c.moveTo(24,494); c.lineTo(W-24,494); c.stroke();
+  drawActing(c,fo,24,504,W-48,370,u);
+  c.fillStyle="#18211c"; c.fillRect(0,884,W,116);
+  c.fillStyle="#fbbf24"; c.font="bold 22px sans-serif"; c.fillText("練習のポイント",24,918);
+  c.fillStyle="#e9f1ec"; c.font="20px sans-serif"; wrapText(c,VIZ_TEXT[fo.group].tip,24,952,W-48,28);
+}
+function mascotImage(){ const im=new Image(); im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(mascotSVG("normal",140).replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" ')); return im; }
+// まとめカードを作る。rs = その日の結果一覧
+function vizCard(rs){
+  const fo=pickFocus(rs); if(!fo) return null;
+  fo.mascot=mascotImage();
+  const el=document.createElement("div"); el.className="card res viz";
+  el.innerHTML=`<h3>今日のまとめ(絵と動き)</h3><canvas width="720" height="1000" style="width:100%;border-radius:10px"></canvas>
+<div class="row" style="margin-top:8px"><button class="vzPng">画像で保存</button><button class="vzMov">動画で保存(6秒)</button></div>
+${DRILL_DETAIL[fo.key]? `<details open><summary>練習メニュー</summary><p>◆ ${DRILL_DETAIL[fo.key].drill}</p>${DRILL_DETAIL[fo.key].stretch?`<p>◇ ${DRILL_DETAIL[fo.key].stretch}</p>`:""}</details>`:""}
+<p class="note vzMsg"></p>`;
+  const cv=el.querySelector("canvas"), c=cv.getContext("2d"), t0=performance.now();
+  const loop=()=>{ if(!el.isConnected && el.dataset.started) return; el.dataset.started=1; drawSummaryViz(c,fo,((performance.now()-t0)%3000)/3000); requestAnimationFrame(loop); };
+  loop();
+  el.querySelector(".vzPng").onclick=()=>{ drawSummaryViz(c,fo,0.6); cv.toBlob(b=>shareOrSave(b,"swing-summary.png",el)); };
+  el.querySelector(".vzMov").onclick=()=>recordViz(cv,el);
+  window.lastViz={fo,el};
+  return el;
+}
+async function shareOrSave(blob,name,el){
+  const file=new File([blob],name,{type:blob.type});
+  try{ if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:"今日のまとめ"}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  const msg=el&&el.querySelector(".vzMsg"); if(msg) msg.textContent=`${name} を保存しました。`;
+}
+function recordViz(cv,el){
+  const msg=el.querySelector(".vzMsg");
+  if(!cv.captureStream || !window.MediaRecorder){ msg.textContent="このブラウザは動画の保存に対応していません。「画像で保存」を使ってください。"; return; }
+  const type=["video/mp4;codecs=avc1.42E01E","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));   // iPhoneの写真アプリが読めるH.264(avc1)を優先
+  if(!type){ msg.textContent="動画の形式に対応していません。「画像で保存」を使ってください。"; return; }
+  const rec=new MediaRecorder(cv.captureStream(30),{mimeType:type}), parts=[];
+  rec.ondataavailable=e=>{ if(e.data.size) parts.push(e.data); };
+  rec.onstop=()=>{ const b=new Blob(parts,{type:type.split(";")[0]}); window.lastVizVideo=b; shareOrSave(b,"swing-summary."+(type.includes("mp4")?"mp4":"webm"),el); };
+  msg.textContent="録画中…(6秒)"; rec.start(); setTimeout(()=>{ rec.stop(); msg.textContent="保存の画面が出たら「ビデオを保存」を選ぶと、写真アプリに入ります。"; },6000);
+}
+// VIZ-END
+
 // ---------------------------------------------------------------- 1本分の分析
 function analyzeSwing(img,world,fps,ratio,lo,hi,no){
   const imgM=aspect(img,ratio);
@@ -346,8 +895,11 @@ function analyzeSwing(img,world,fps,ratio,lo,hi,no){
   const text=items.map(x=>x[2]); if(mode==="上級者" && !adv) text.push("上級者モードは、記録が5本以上たまると使えます。");
   // 体チェックの基準があれば、原因が「体の硬さ」か「動かし方」かを一言そえる
   for(const [k,note] of bodyNotes(m)){ if(keys.includes(k)||theme==="全部"){ text.push(note); break; } }
+  if(curPlace()==="home") text.push("在宅(素振り)の結果です。クラブの重さがないので、打ちっぱなしの数値とは少し違うことがあります。");
   const voiceText=items.map(x=>SHORT[x[0]]||x[2]).concat(keys.length&&DRILL[keys[0]]? [DRILL[keys[0]]] : []);
-  return {no,faceOn:false,ph,m,keys,text,voiceText,lines: lines || proRows(m), mode};
+  let gameVoice=""; try{ gameVoice=gameOnSwing(keys); }catch(e){ log("game",e.message); }
+  let viz=null; try{ viz=vizCapture(imgM,ph); }catch(e){}
+  return {no,faceOn:false,ph,m,keys,text,voiceText,gameVoice,viz,lines: lines || proRows(m), mode};
 }
 function renderResult(r){
   const el=document.createElement("div"); el.className="card res";
@@ -358,6 +910,7 @@ function renderResult(r){
     el.innerHTML=head+rows+`<ul>${r.text.map(t=>`<li>${t}</li>`).join("")}</ul>`+(r.keys.length&&DRILL[r.keys[0]]?`<p class="note">${DRILL[r.keys[0]]}</p>`:"")+drillHtml(r.keys);
   }
   $("results").prepend(el);
+  return el;
 }
 function summarize(rs){
   const valid=rs.filter(r=>!r.faceOn); if(valid.length<2) return null;
@@ -386,7 +939,7 @@ async function initPose(){
 }
 function toArr(lms){ return lms? lms.map(p=>[p.x,p.y,p.z??0]) : null; }
 // 本当に人の全身が映っているか(人がいないのに「人らしきもの」を拾うのを防ぐ)
-const BODY=[NOSE,L_SH,R_SH,L_HIP,R_HIP,L_KN,R_KN,L_AN,R_AN,L_WR,R_WR];
+const BODY=[NOSE,L_SH,R_SH,L_HIP,R_HIP,L_KN,R_KN,L_AN,R_AN];   // 手首は頭の上で画面からはみ出してもよい
 function bodyOk(lms){
   if(!lms) return false;
   const vis=BODY.map(i=>lms[i].visibility??1); const meanVis=vis.reduce((a,b)=>a+b,0)/vis.length;
@@ -515,7 +1068,7 @@ class Live{
     let text = (top && top===prev)? "前の1本と同じく、"+short[0] : short.join(" ");
     if(top && DRILL[top] && (top!==prev || r.no%5===0)) text+=" "+DRILL[top];
     if(!top) text=r.voiceText.join(" ");
-    return text;
+    return text+(r.gameVoice? " "+r.gameVoice : "");
   }
   scan(t){
     const b=this.buf; if(b.length<30) return;
@@ -528,8 +1081,12 @@ class Live{
       const seen=b.slice(lo,Math.min(hi,b.length)).filter(f=>f.img).length;
       if(seen<0.7*(Math.min(hi,b.length)-lo)) continue;            // 途中で体が映っていない
       this.lastImpactT=tImp; this.armed=false;
-      try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); renderResult(r);
-        speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r))); }
+      try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); const el=renderResult(r);
+        speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r)));
+        if(!r.faceOn){ // 4コマ: 各場面の時刻に一番近い画像と、その瞬間の骨格
+          const idx=[r.ph.address,r.ph.top,r.ph.impact,r.ph.finish], tiles=idx.map((k,i)=>({src:snaps.nearest(b[k].t), lms:img[k], label:PHASE_LABEL[i]}));
+          if(tiles.every(x=>x.src)) attachStrip(el,r,composeStrip(tiles,mirror)); else log("snapshot missing");
+        } }
       catch(e){ log("analyze error",e.message); }
       setStatus("待機中(構えると開始)","wait");
     }
@@ -573,6 +1130,7 @@ async function startCamera(){
       draw(v,null); requestAnimationFrame(loop); return;
     }
     await pose.send({image:v}); const L=landmarks(lastResults);
+    snaps.grab(v,t);
     live.push(t, L.img, L.world);
     draw(v, L.img);
     if(!live.active){ requestAnimationFrame(loop); return; }
@@ -583,15 +1141,17 @@ async function startCamera(){
   loop();
 }
 function stop(){
-  running=false; if(stream) stream.getTracks().forEach(t=>t.stop()); try{ wakeLock&&wakeLock.release(); }catch(e){}
-  if(live){ const s=summarize(live.results); if(s){ speak(s); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>まとめ</h3><p>${s}</p>`; $("results").prepend(el); } }
+  running=false; snaps.clear(); if(stream) stream.getTracks().forEach(t=>t.stop()); try{ wakeLock&&wakeLock.release(); }catch(e){}
+  if(live){ const vz=vizCard(live.results); if(vz) $("results").prepend(vz); const s=summarize(live.results); if(s){ speak(s+(vz?" 画面に、今日のまとめの図を出しました。":"")); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>まとめ</h3><p>${s}</p>`; $("results").prepend(el); } }
   $("setup").style.display="block"; $("ctrl").style.display="none";
 }
 
 // ---------------------------------------------------------------- 体チェック(可動域)
 const BODY_LABEL={rot_right:"右への捻転(テークバック方向)",rot_left:"左への捻転(フォロー方向)",hip_right:"右へひねったときの腰の回転",hip_left:"左へひねったときの腰の回転",hinge:"前傾の深さ(お辞儀の角度)",arm:"腕の上がる角度"};
 const DAILY_DROP={rot_right:10,rot_left:10,hip_right:8,hip_left:8,hinge:8,arm:10};
-function loadProfile(){ try{ return JSON.parse(localStorage.getItem("bodyProfile")||'{"records":[]}'); }catch(e){ return {records:[]}; } }
+function loadProfile(){ try{ const p=JSON.parse(localStorage.getItem("bodyProfile")||'{"records":[]}');
+  p.records=(p.records||[]).filter(r=>r.values && Object.values(r.values).every(v=>isFinite(v)));   // 壊れた記録(NaN)は捨てる
+  return p; }catch(e){ return {records:[]}; } }
 function saveRecord(kind,values,base){ try{ const p=loadProfile(); p.records.push({t:Date.now(),kind,base,values}); localStorage.setItem("bodyProfile",JSON.stringify(p)); }catch(e){} }
 function baselineValues(){
   const base={}, all={};
@@ -619,10 +1179,12 @@ function measureRotation(imgM,world,fps){
 }
 function measureHinge(imgM){ return {hinge:Math.round(percentile(imgM.map(spineTilt),97))}; }
 function measureArm(imgM){
+  // 横から見ると奥の腕は隠れやすいので、左右それぞれ計算して大きいほう(よく見えているほう)を使う
   let best=0;
-  for(const f of imgM){ const sh=center(f,L_SH,R_SH), hp=center(f,L_HIP,R_HIP), wr=[(f[L_WR][0]+f[R_WR][0])/2,(f[L_WR][1]+f[R_WR][1])/2];
-    const v1=[hp[0]-sh[0],hp[1]-sh[1]], v2=[wr[0]-sh[0],wr[1]-sh[1]];
-    const c=(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)+1e-9); best=Math.max(best,deg(Math.acos(Math.max(-1,Math.min(1,c))))); }
+  for(const f of imgM){ const hp=center(f,L_HIP,R_HIP);
+    for(const [S,W] of [[L_SH,L_WR],[R_SH,R_WR]]){ const sh=f[S], wr=f[W];
+      const v1=[hp[0]-sh[0],hp[1]-sh[1]], v2=[wr[0]-sh[0],wr[1]-sh[1]];
+      const c=(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)+1e-9); best=Math.max(best,deg(Math.acos(Math.max(-1,Math.min(1,c))))); } }
   return {arm:Math.round(best)};
 }
 function measureBody(kind,img,world,fps,ratio){
@@ -659,12 +1221,14 @@ function showBase(){
   $("bodyBaseView").textContent= ks.length? "保存している基準: "+ks.map(k=>`${BODY_LABEL[k].replace(/\(.*\)/,"")} ${Math.round(b[k])}度`).join(" / ") : "まだ基準は保存されていません。";
 }
 function finishBody(kind,values){
+  if(!Object.keys(values).length || Object.values(values).some(v=>!isFinite(v))) throw new Error("角度をうまく計算できませんでした。もう一度試してください。");
   const base=baselineValues(), first=!Object.keys(values).some(k=>k in base), asBase=$("bodyBase").checked||first;
   const msg= asBase? "測定した値を、あなたの基準として保存しました。打席で同じ体操をすると、今日の体の状態を比べられます。" : dailyMessage(values,base);
   saveRecord(kind,values,asBase);
   const rows=Object.entries(values).map(([k,v])=>`<div class="metric"><span>${BODY_LABEL[k]}</span><b>${v}度${k in base?` (基準 ${Math.round(base[k])}度)`:""}</b></div>`).join("");
   const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>体チェック: ${kind}</h3>${rows}<p>${msg}</p>`; $("results").prepend(el);
-  speak(msg); showBase();
+  let gv=""; try{ gv=gameOnBody(); }catch(e){}
+  speak(msg+(gv? " "+gv:"")); showBase();
   window.bodyResult={kind,values,msg};
 }
 async function bodyFromFile(file){
@@ -701,7 +1265,8 @@ const GUIDE={
     steps:[{type:"go",t:"両腕を前から、頭の上まで目いっぱい上げて、そのまま止めてください。",tag:"max"},
            {type:"back",t:"はい、オーケーです。腕を下ろしてください。"}]},
 };
-const HOLD_MS=2000, STILL_DEG=5, STEP_TIMEOUT=25000;
+const HOLD_MS=2000, STEP_TIMEOUT=25000;
+const STILL_DEG={捻転:6, 前傾:6, 腕:10};   // 「止まっている」とみなす揺れの幅(腕は検出がぶれやすいので広め)
 
 // ---------------------------------------------------------------- お手本アニメーション(棒人間)
 // kind ごとに、0〜1の進み具合 p に合わせてポーズを描く。tag を渡すとその動きだけを描く。
@@ -718,11 +1283,22 @@ function demoPose(kind,p,tag){
   if(kind==="前傾") return {hinge: 75*hold(0.3,0.75,1), label:"股関節からお辞儀して止める"};
   return {arm: 170*hold(0.3,0.75,1), label:"両腕を頭の上まで上げて止める"};
 }
+// お手本の頭を「ボールくん」の顔にする(かわいい版)
+function ballHead(c,x,y,r,tilt){
+  c.save(); c.translate(x,y); c.rotate(tilt||0);
+  c.fillStyle="#fafaf9"; c.beginPath(); c.arc(0,0,r,0,7); c.fill();
+  c.fillStyle="#d6d3d1"; for(const [dx,dy] of [[-.5,.5],[0,.7],[.5,.5],[-.7,.1],[.7,.1]]){ c.beginPath(); c.arc(dx*r,dy*r,r*.07,0,7); c.fill(); }
+  c.fillStyle="#16a34a"; c.beginPath(); c.moveTo(-r,-r*.35); c.quadraticCurveTo(0,-r*1.35,r,-r*.35); c.closePath(); c.fill();
+  c.fillStyle="#1f2937"; c.beginPath(); c.ellipse(-r*.32,-r*.02,r*.1,r*.15,0,0,7); c.ellipse(r*.32,-r*.02,r*.1,r*.15,0,0,7); c.fill();
+  c.strokeStyle="#1f2937"; c.lineWidth=r*.09; c.beginPath(); c.arc(0,r*.22,r*.22,.2,Math.PI-.2); c.stroke();
+  c.fillStyle="rgba(253,164,175,.8)"; c.beginPath(); c.ellipse(-r*.58,r*.2,r*.14,r*.08,0,0,7); c.ellipse(r*.58,r*.2,r*.14,r*.08,0,0,7); c.fill();
+  c.restore();
+}
 function drawDemo(cnv,kind,p,tag){
   const c=cnv.getContext("2d"), W=cnv.width, H=cnv.height, s=H/240;
   c.clearRect(0,0,W,H); c.lineCap="round"; c.lineJoin="round";
   const P=demoPose(kind,p,tag), col="#e9f1ec", hi="#4ade80";
-  c.strokeStyle=col; c.fillStyle=col; c.lineWidth=6*s;
+  c.strokeStyle=col; c.fillStyle=col; c.lineWidth=10*s;
   const line=(x1,y1,x2,y2,st)=>{ c.strokeStyle=st||col; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); };
   const cx=W/2;
   if(kind==="捻転"){
@@ -734,12 +1310,12 @@ function drawDemo(cnv,kind,p,tag){
     line(cx,shY,cx,hipY);
     line(cx-half,shY,cx+half,shY,hi);                                         // 肩(緑)
     line(cx-half*0.9,shY+8*s,cx+half*0.5,shY+40*s); line(cx+half*0.9,shY+8*s,cx-half*0.5,shY+40*s); // 組んだ腕
-    c.beginPath(); c.arc(cx+Math.sin(a)*6*s,shY-28*s,17*s,0,7); c.fill();
+    ballHead(c,cx+Math.sin(a)*6*s,shY-30*s,21*s,0);
     // 上から見た図
     const ox=W-46*s, oy=46*s; c.lineWidth=3*s; c.strokeStyle="#9db3a6"; c.beginPath(); c.arc(ox,oy,30*s,0,7); c.stroke();
     line(ox-26*s*Math.cos(a),oy-26*s*Math.sin(a),ox+26*s*Math.cos(a),oy+26*s*Math.sin(a),hi);
     c.fillStyle="#9db3a6"; c.font=`${11*s}px sans-serif`; c.textAlign="center"; c.fillText("上から見た肩",ox,oy+44*s); c.fillText("カメラ ↓",ox,oy+56*s);
-    c.lineWidth=6*s;
+    c.lineWidth=10*s;
   } else {
     // 横から見た姿(右を向いて立つ)
     const footY=225*s, hipX=cx-10*s, hipY=145*s, kneeX=hipX+8*s+(kind==="前傾"? P.hinge/75*8*s:0), kneeY=185*s;
@@ -749,13 +1325,13 @@ function drawDemo(cnv,kind,p,tag){
     const tilt=(kind==="前傾"? P.hinge:0)*Math.PI/180, L=70*s;
     const shX=hx+Math.sin(tilt)*L, shY=hipY-Math.cos(tilt)*L;
     line(hx,hipY,shX,shY,kind==="前傾"? hi:col);                              // 背骨
-    c.beginPath(); c.arc(shX+Math.sin(tilt)*24*s,shY-Math.cos(tilt)*24*s,16*s,0,7); c.fill();
     let armA = kind==="腕"? P.arm*Math.PI/180 : 0;                           // 0=下、180=真上(体の前を通る)
     const dirX=Math.sin(armA+tilt*0), dirY=Math.cos(armA);
     const ax=shX+ (kind==="前傾"? 0 : dirX*62*s), ay=shY+(kind==="前傾"? 62*s : dirY*62*s);
     line(shX,shY,ax,ay,kind==="腕"? hi:col);
-    if(kind==="前傾"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(hx,hipY,hx,hipY-80*s,"#9db3a6"); c.setLineDash([]); c.lineWidth=6*s; }
-    if(kind==="腕"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(shX,shY,hx,hipY,"#9db3a6"); c.setLineDash([]); c.lineWidth=6*s; }
+    ballHead(c,shX+Math.sin(tilt)*28*s,shY-Math.cos(tilt)*28*s,20*s,0);   // 腕より手前に描く(顔は正面のまま)
+    if(kind==="前傾"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(hx,hipY,hx,hipY-80*s,"#9db3a6"); c.setLineDash([]); c.lineWidth=10*s; }
+    if(kind==="腕"){ c.lineWidth=2*s; c.setLineDash([5*s,5*s]); line(shX,shY,hx,hipY,"#9db3a6"); c.setLineDash([]); c.lineWidth=10*s; }
   }
   c.fillStyle="#4ade80"; c.font=`bold ${15*s}px sans-serif`; c.textAlign="left"; c.fillText(P.label,8*s,20*s);
 }
@@ -796,6 +1372,8 @@ function measureGuided(kind,rec,ratio){
 window.measureGuided=measureGuided;
 async function bodyCamera(){
   const kind=$("bodyKind").value, G=GUIDE[kind], mini=$("demoMini");
+  document.body.classList.add("bodymode"); window.scrollTo(0,0);
+  mini.style.display="block"; drawDemo(mini,kind,0.5,G.steps[0].tag||"");
   speak("体チェックを始めます");
   $("setup").style.display="none"; $("bodySetup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   try{
@@ -803,7 +1381,8 @@ async function bodyCamera(){
     const v=$("vid"); v.srcObject=stream; await v.play();
     setStatus("姿勢推定を準備中…","wait"); setGuide("準備中…"); await initPose();
     running=true;
-    const rec=[]; const t0=performance.now(), ratio=()=>v.videoWidth/v.videoHeight;
+    let lastRatio=v.videoWidth/v.videoHeight;
+    const rec=[]; const t0=performance.now(), ratio=()=>{ if(v.videoWidth>0) lastRatio=v.videoWidth/v.videoHeight; return lastRatio; };
     let readySince=null, phase="wait", si=0, stepAt=0, listening=false, sw0=null, holdStart=null, win=[];
     // 今の動きの大きさ(度): 捻転=正面からひねった角度 / 前傾=お辞儀の角度 / 腕=腕の上がる角度
     const metric=img=>{ const f=aspect([img],ratio())[0];
@@ -830,7 +1409,8 @@ async function bodyCamera(){
           requestAnimationFrame(loop); return;
         }
         const st=G.steps[si];
-        if(st.tag){ mini.style.display="block"; drawDemo(mini,kind,0.5,st.tag); } else mini.style.display="none";
+        // 下のお手本: 止める動きのときはその姿勢、戻るときは動きをくり返し見せる
+        drawDemo(mini,kind, st.tag? 0.5 : ((performance.now()/3000)%1), st.tag||"");
         if(!listening){ setGuide(st.t); rec.push({t,img:L.img,world:L.world,tag:null}); requestAnimationFrame(loop); return; }
         const m= L.img? metric(L.img) : null;
         let hold=false, label="";
@@ -842,11 +1422,16 @@ async function bodyCamera(){
           if(holdStart && t-holdStart>=HOLD_MS){ sw0=median(win.map(x=>x.w)); rec.push({t,img:L.img,world:L.world,tag:st.tag,hold:true}); if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
         } else if(st.type==="go"){
           if(m!==null){ win.push({t,m}); win=win.filter(x=>t-x.t<1000);
-            const ms=win.map(x=>x.m), still=ms.length>3 && Math.max(...ms)-Math.min(...ms)<STILL_DEG;
+            const ms=win.map(x=>x.m), still=ms.length>3 && Math.max(...ms)-Math.min(...ms)<STILL_DEG[kind];
             if(m>=G.goMin && still){ holdStart=holdStart??t; hold=true; } else holdStart=null; }
           label = m===null? "体が映っていません" : m<G.goMin? `もっと大きく… 今 ${Math.round(m)}度` : holdStart? `いいですね、そのまま止めて… ${Math.max(0,Math.ceil((HOLD_MS-(t-holdStart))/1000))}` : `止めてください 今 ${Math.round(m)}度`;
           if(holdStart && t-holdStart>=HOLD_MS){ rec.push({t,img:L.img,world:L.world,tag:st.tag,hold:true}); if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
-          if(t-stepAt>STEP_TIMEOUT){ if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }   // 止まれなかったら先へ
+          if(t-stepAt>STEP_TIMEOUT){
+            // うまく止まれなかったときは、この動きの中で一番大きく動けた1秒ぶんを使う
+            const mine=rec.filter(f=>f.tag===st.tag && f.t>=stepAt && f.img).map(f=>({f,m:metric(f.img)}));
+            if(mine.length){ const top=percentile(mine.map(x=>x.m),85); if(top>=G.goMin*0.6) mine.filter(x=>x.m>=top-STILL_DEG[kind]).forEach(x=>x.f.hold=true); }
+            speak("うまく止まれなかったので、一番大きく動けた所で測ります。");
+            if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
         } else {  // back
           label = "元の姿勢に戻ってください";
           if((m!==null && m<=G.backMax) || t-stepAt>8000){ if(await nextStep()){ done(); return; } requestAnimationFrame(loop); return; }
@@ -859,13 +1444,13 @@ async function bodyCamera(){
     });
     if(window.DEBUG) window.lastRec=rec.map(f=>({t:Math.round(f.t),tag:f.tag,hold:!!f.hold,m: f.img? Math.round(metric(f.img)) : null}));
     await speak("おしまいです。");
-    running=false; stream.getTracks().forEach(x=>x.stop()); setGuide(""); mini.style.display="none";
+    running=false; stream.getTracks().forEach(x=>x.stop()); setGuide(""); mini.style.display="none"; document.body.classList.remove("bodymode");
     const fps=rec.length/((rec[rec.length-1].t-rec[0].t)/1000||1);
     const img=fillSmooth(rec.map(f=>f.img)), world=fillSmooth(rec.map(f=>f.world));
     if(!img || rec.filter(f=>f.img).length<0.5*rec.length) throw new Error("途中で体が映らなくなりました。全身が入るように立ってください。");
-    finishBody(kind,measureGuided(kind,rec,v.videoWidth/v.videoHeight));
+    finishBody(kind,measureGuided(kind,rec,lastRatio));   // カメラを止めると映像サイズが0になるので、撮影中の比率を使う
     setStatus("体チェックが終わりました","ready");
-  }catch(e){ running=false; setGuide(""); $("demoMini").style.display="none"; if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
+  }catch(e){ running=false; setGuide(""); $("demoMini").style.display="none"; document.body.classList.remove("bodymode"); if(stream) stream.getTracks().forEach(x=>x.stop()); fail("測定できませんでした: "+e.message); }
   $("setup").style.display="block"; $("bodySetup").style.display="block"; $("ctrl").style.display="none"; window.analysisDone=true;
 }
 
@@ -937,10 +1522,21 @@ async function analyzeFile(file){
   if(img){ const ratio=v.videoWidth/v.videoHeight, imgM=aspect(img,ratio);
     let segs=findSwings(imgM,fps); if(!segs.length) segs=[[0,img.length,0]];
     if(window.DEBUG){ window.lastSegs=segs; window.lastImg=img; }
-    segs.forEach(([lo,hi],k)=>{ try{ const r=analyzeSwing(img,world,fps,ratio,lo,hi,k+1); results.push(r); window.swingResults.push(r); renderResult(r);
-      speak((segs.length>1?`${r.no}本目。`:"")+(r.faceOn? r.text[0] : r.voiceText.join(" "))); }catch(e){ log("analyze error",e.message); } });
+    const cards=[];
+    segs.forEach(([lo,hi],k)=>{ try{ const r=analyzeSwing(img,world,fps,ratio,lo,hi,k+1); results.push(r); window.swingResults.push(r); cards.push([renderResult(r),r]);
+      speak((segs.length>1?`${r.no}本目。`:"")+(r.faceOn? r.text[0] : r.voiceText.join(" ")+(r.gameVoice? " "+r.gameVoice:""))); }catch(e){ log("analyze error",e.message); } });
+    // 4コマ: 動画を各場面の時刻に合わせて1枚ずつ取り出す
+    for(const [el,r] of cards){ if(r.faceOn) continue;
+      try{ const tiles=[];
+        for(const [i,k] of [r.ph.address,r.ph.top,r.ph.impact,r.ph.finish].entries()){
+          v.currentTime=Math.min(v.duration-0.01,k/fps); await withTimeout(new Promise(ok=>v.onseeked=ok),5000,"seek");
+          const cv=document.createElement("canvas"); cv.width=SNAP_W; cv.height=Math.round(SNAP_W*v.videoHeight/v.videoWidth); cv.getContext("2d").drawImage(v,0,0,cv.width,cv.height);
+          tiles.push({src:cv,lms:img[k],label:PHASE_LABEL[i]}); }
+        await attachStrip(el,r,composeStrip(tiles,false));
+      }catch(e){ log("strip error",e.message); } }
   }
   if(!results.length){ speak("スイングを見つけられませんでした。"); }
+  const vz=vizCard(results); if(vz) $("results").prepend(vz);
   const s=summarize(results); if(s){ speak(s); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>まとめ</h3><p>${s}</p>`; $("results").prepend(el); }
   setStatus("分析が終わりました","ready"); $("setup").style.display="block";
   window.analysisDone=true;
@@ -951,9 +1547,14 @@ $("pickFile").onclick=()=>$("file").click();
 $("file").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) analyzeFile(f); };  // 同じ動画を続けて選べるように
 $("bodyCam").onclick=bodyCamera; $("bodyFileBtn").onclick=()=>$("bodyFile").click();
 $("bodyFile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) bodyFromFile(f); };
-showBase(); loadCamPrefs(); showHow(); demoLoop(); $("bodyKind").onchange=showHow;
-$("flip").onclick=flipCamera; $("camSwing").onchange=saveCamPrefs; $("camBody").onchange=saveCamPrefs;
-$("clearHist").onclick=()=>{ if(confirm("スイングの記録と体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); showBase(); } };
+showBase(); loadCamPrefs(); showSuggest();
+function applyPlace(){ const home=curPlace()==="home"; window.HOME_SWING=home; $("homeNote").style.display=home?"block":"none"; try{ localStorage.setItem("place",curPlace()); }catch(e){} }
+try{ const sp=localStorage.getItem("place"); if(sp) $("place").value=sp; }catch(e){}
+$("place").onchange=applyPlace; applyPlace();
+$("showHist").onclick=()=>{ const v=$("histView"); const open=v.style.display==="none"; v.style.display=open?"block":"none"; $("showHist").textContent=open?"記録を閉じる":"記録を見る"; if(open){ renderHistory(); v.scrollIntoView({behavior:"smooth"}); } }; showHow(); demoLoop(); $("bodyKind").onchange=showHow; renderGame();
+$("flip").onclick=flipCamera; $("bodyStop").onclick=()=>{ running=false; }; $("camSwing").onchange=saveCamPrefs; $("camBody").onchange=saveCamPrefs;
+$("clearHist").onclick=async()=>{ if(confirm("スイングの記録・4コマ・体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); await clearSwings(); showBase(); if($("histView").style.display!=="none") renderHistory(); } };
+$("galMore").onclick=()=>{ galLimit+=10; renderGallery(); };
 window.DEBUG=new URLSearchParams(location.search).has("debug");
 if(new URLSearchParams(location.search).get("rate")) window.PLAYBACK_RATE=+new URLSearchParams(location.search).get("rate");
 </script>
