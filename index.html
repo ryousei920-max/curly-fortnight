@@ -94,6 +94,8 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     </div>
     <label for="quality">解析の細かさ</label>
     <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select>
+    <label style="display:flex;align-items:center;gap:10px;margin:12px 0 0;color:var(--text);font-size:15px"><input type="checkbox" id="recMode" style="width:22px;height:22px;accent-color:#16a34a"> 録画モード(1球ごとに短い動画を保存)</label>
+    <p class="note" style="margin:4px 0 0">構えて「チェック開始」からフィニッシュまでを録画します。1球あたり約1〜3MB。新しい30本までスマホに残り、「写真に保存」で写真アプリに入れられます。電池の減りは少し早くなります。</p>
     <div id="suggest" class="note" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0b110e;color:var(--text)"></div>
     <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。スマホを置いたら、近く(1〜2m)でカメラに手のひらを見せるとスタート。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。続けて打つときは合図なしでOK。1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</p>
     <label for="camSwing">カメラ</label>
@@ -147,6 +149,9 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
     <p class="note" id="galInfo" style="margin:0 0 6px"></p>
     <div id="gallery"></div>
     <button id="galMore" style="display:none;margin-top:8px">もっと見る</button>
+    <h3 style="margin:16px 0 4px;font-size:16px">スイング動画(録画モード)</h3>
+    <p class="note" id="clipInfo" style="margin:0 0 6px"></p>
+    <div id="clipGal"></div>
   </div>
   <div id="log"></div>
 </main>
@@ -379,11 +384,11 @@ function stripBlob(cv){ return new Promise(r=>cv.toBlob(b=>r(b),"image/jpeg",0.7
 const SWING_KEEP=150;   // これより古いものから自動で消す(約12MBまで)
 let dbp=null;
 function idb(){ if(dbp) return dbp;
-  dbp=new Promise((ok,ng)=>{ try{ const q=indexedDB.open("swingcoach",1);
-    q.onupgradeneeded=()=>q.result.createObjectStore("swings",{keyPath:"id",autoIncrement:true});
+  dbp=new Promise((ok,ng)=>{ try{ const q=indexedDB.open("swingcoach",2);
+    q.onupgradeneeded=()=>{ const db=q.result; for(const s of ["swings","clips"]) if(!db.objectStoreNames.contains(s)) db.createObjectStore(s,{keyPath:"id",autoIncrement:true}); };
     q.onsuccess=()=>ok(q.result); q.onerror=()=>ng(q.error); }catch(e){ ng(e); } });
   return dbp; }
-async function idbDo(mode,fn){ const db=await idb(); return new Promise((ok,ng)=>{ const tx=db.transaction("swings",mode), st=tx.objectStore("swings"); const r=fn(st); tx.oncomplete=()=>ok(r&&r.result); tx.onerror=()=>ng(tx.error); }); }
+async function idbDo(mode,fn,store="swings"){ const db=await idb(); return new Promise((ok,ng)=>{ const tx=db.transaction(store,mode), st=tx.objectStore(store); const r=fn(st); tx.oncomplete=()=>ok(r&&r.result); tx.onerror=()=>ng(tx.error); }); }
 async function saveSwing(rec){
   try{ const id=await idbDo("readwrite",st=>st.add(rec));
     const keys=await idbDo("readonly",st=>st.getAllKeys());
@@ -402,6 +407,54 @@ async function attachStrip(el,r,cv){
   el.querySelector("h3").after(fig);
   await saveSwing({t:Date.now(), blob, text:r.text, keys:r.keys, theme:$("theme").value});
   window.stripsSaved=(window.stripsSaved||0)+1;
+}
+
+// ---------------------------------------------------------------- 録画モード(1球ごとの短い動画)
+// 「チェック開始」で録画を始め、スイングを分析したら少し待って止めて保存。スイングにならなければ捨てる。
+const CLIP_KEEP=30, CLIP_MAX_MS=15000, CLIP_TAIL_MS=800;
+const recOn=()=>{ const c=document.getElementById("recMode"); return !!(c&&c.checked); };
+const clipRec={rec:null,timer:null,
+  type(){ return window.MediaRecorder && ["video/mp4;codecs=avc1.42E01E","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t)); },
+  start(src){ src=src||stream; if(!recOn()||!src||this.rec) return false; const type=this.type(); if(!type) return false;
+    try{ const parts=[], rec=new MediaRecorder(src,{mimeType:type,videoBitsPerSecond:1500000});
+      rec.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); }; rec.parts=parts; rec.mime=type; rec.t0=performance.now(); rec.start(500); this.rec=rec;
+      this.timer=setTimeout(()=>{ this.abort(); this.start(src); },CLIP_MAX_MS);   // 構えたまま長く打たないときは撮り直す(長い動画にしない)
+      return true; }catch(e){ log("rec start",e.message); this.rec=null; return false; } },
+  abort(){ clearTimeout(this.timer); const r=this.rec; this.rec=null; if(r){ r.onstop=null; try{ r.stop(); }catch(e){} } },
+  finish(r,el){ clearTimeout(this.timer); const rec=this.rec; this.rec=null; if(!rec) return Promise.resolve(null);
+    return new Promise(done=>setTimeout(()=>{ rec.onstop=async()=>{ const blob=new Blob(rec.parts,{type:rec.mime.split(";")[0]});
+        if(blob.size<1000){ done(null); return; }
+        const id=await saveClip({t:Date.now(),no:r.no,blob,keys:r.keys||[],text:(r.text||[])[0]||""}); if(el) attachClip(el,blob,r.no); window.clipsSaved=(window.clipsSaved||0)+1; done(id); };
+      try{ rec.stop(); }catch(e){ done(null); } },CLIP_TAIL_MS)); }
+};
+window.clipRec=clipRec;
+async function saveClip(rec){ try{ const id=await idbDo("readwrite",st=>st.add(rec),"clips"); const keys=await idbDo("readonly",st=>st.getAllKeys(),"clips");
+    if(keys.length>CLIP_KEEP) await idbDo("readwrite",st=>{ keys.slice(0,keys.length-CLIP_KEEP).forEach(k=>st.delete(k)); },"clips"); return id; }catch(e){ log("save clip failed",e.message); return null; } }
+async function listClips(){ try{ return (await idbDo("readonly",st=>st.getAll(),"clips")).reverse(); }catch(e){ return []; } }
+async function deleteClip(id){ try{ await idbDo("readwrite",st=>st.delete(id),"clips"); }catch(e){} }
+async function clearClips(){ try{ await idbDo("readwrite",st=>st.clear(),"clips"); }catch(e){} }
+window.listClips=listClips;
+const clipExt=b=>b.type.includes("mp4")? "mp4" : "webm";
+function clipEl(blob,name){
+  const w=document.createElement("div");
+  const v=document.createElement("video"); v.src=URL.createObjectURL(blob); v.controls=true; v.playsInline=true; v.muted=true; v.preload="metadata"; v.style.cssText="width:100%;max-height:60vh;border-radius:10px;background:#000;display:block;margin:6px 0";
+  const b=document.createElement("button"); b.textContent="写真に保存(共有)"; b.style.marginTop="4px";
+  const m=document.createElement("p"); m.className="note vzMsg"; m.style.margin="4px 0 0";
+  b.onclick=()=>{ m.textContent="共有の画面で「ビデオを保存」を選ぶと、写真アプリに入ります。"; shareOrSave(blob,name+"."+clipExt(blob),w); };
+  w.append(v,b,m); return w;
+}
+function attachClip(el,blob,no){ const h=el.querySelector("h3"); const c=clipEl(blob,`swing-${no}`); c.className="clip"; (h? h.after(c) : el.prepend(c)); }
+async function renderClips(){
+  const box=$("clipGal"); if(!box) return; const all=await listClips(); const mb=all.reduce((s,x)=>s+(x.blob?x.blob.size:0),0)/1048576;
+  $("clipInfo").textContent= all.length? `保存している動画 ${all.length}本(約${mb.toFixed(1)}MB・新しい${CLIP_KEEP}本まで残ります)` : "まだ動画はありません。設定で「録画モード」をオンにすると、1球ごとにここへたまります。";
+  box.innerHTML="";
+  for(const x of all.slice(0,10)){ const d=new Date(x.t), when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    const card=document.createElement("div"); card.style.cssText="border-top:1px solid var(--line);padding:8px 0";
+    card.innerHTML=`<div class="note" style="display:flex;justify-content:space-between;margin:0"><span>${when} ・ ${x.no}本目</span><a href="#" style="color:var(--sub)">消す</a></div>`;
+    card.appendChild(clipEl(x.blob,`swing-${dayKey(x.t)}-${x.no}`));
+    if(x.text){ const p=document.createElement("p"); p.className="note"; p.style.margin="4px 0 0"; p.textContent=x.text; card.appendChild(p); }
+    card.querySelector("a").onclick=async e=>{ e.preventDefault(); if(confirm("この動画を消しますか?")){ await deleteClip(x.id); renderClips(); } };
+    box.appendChild(card); }
 }
 
 // ---------------------------------------------------------------- 上達の記録・今日のおすすめ
@@ -471,7 +524,7 @@ async function renderGallery(){
   $("galMore").style.display= all.length>galLimit? "block":"none";
 }
 function renderHistory(){
-  galLimit=10; renderGallery();
+  galLimit=10; renderGallery(); renderClips();
   const days=dailySummary(history()).slice(-30), box=$("histCharts");
   if(!days.length){ box.innerHTML='<p class="note">まだ記録がありません。スイングを分析すると、ここに日ごとの変化が出ます。</p>'; $("histTable").innerHTML=""; return; }
   box.innerHTML=""; for(const T of TREND){ const d=document.createElement("div"); d.className="hc"; box.appendChild(d); lineChart(d,T,days); }
@@ -953,7 +1006,7 @@ function bodyOk(lms){
 function landmarks(r){ const ok=r&&bodyOk(r.poseLandmarks); return {img: ok? toArr(r.poseLandmarks):null, world: ok? toArr(r.poseWorldLandmarks):null}; }
 
 const cv=$("cv"), ctx=cv.getContext("2d");
-let mirror=false;  // インカメのときは鏡のように左右反転して表示(分析には影響しない)
+let mirror=false;  // インカメのときは画面だけ鏡のように左右反転して表示。分析と4コマ写真は反転しない元の映像を使う
 async function openCamera(facing){
   mirror = facing==="user"; curFacing=facing;
   const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:false});
@@ -965,7 +1018,7 @@ async function flipCamera(){
   if(!stream) return;
   const next= curFacing==="user"? "environment" : "user";
   try{
-    switching=true;
+    switching=true; clipRec.abort();
     await new Promise(r=>setTimeout(r,120));   // 解析中のコマが終わるのを待つ
     const ns=await openCamera(next);
     stream.getTracks().forEach(x=>x.stop()); stream=ns;
@@ -1039,7 +1092,7 @@ class Live{
     setStatus("スタート(構えるとチェック)","ready"); speak("スタート。打席で構えると、チェックを始めます。");
   }
   sleep(){
-    this.active=false; this.armed=false; this.buf=[];
+    this.active=false; this.armed=false; this.buf=[]; clipRec.abort();
     setStatus("手のひらを見せるとスタート","wait"); speak("一時停止しました。再開するときは、カメラに手のひらを見せてください。");
   }
   push(t,img,world){
@@ -1059,7 +1112,7 @@ class Live{
     const still=(Math.max(...wy)-Math.min(...wy))<0.03 && (Math.max(...wx)-Math.min(...wx))<0.03;
     const f=recent[recent.length-1].img, hipY=(f[L_HIP][1]+f[R_HIP][1])/2;
     const imgM=aspect([f],this.ratio)[0];
-    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; this.armedAt=t; setStatus("チェック中","busy"); speak("チェック開始"); }
+    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; this.armedAt=t; setStatus("チェック中","busy"); speak("チェック開始"); clipRec.start(); }
   }
   voiceFor(r){
     // 同じ課題が続くときは短く。練習ドリルは、課題が変わったときと5本ごとに伝える
@@ -1081,11 +1134,11 @@ class Live{
       const seen=b.slice(lo,Math.min(hi,b.length)).filter(f=>f.img).length;
       if(seen<0.7*(Math.min(hi,b.length)-lo)) continue;            // 途中で体が映っていない
       this.lastImpactT=tImp; this.armed=false;
-      try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); const el=renderResult(r);
+      try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); const el=renderResult(r); clipRec.finish(r,el);
         speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r)));
         if(!r.faceOn){ // 4コマ: 各場面の時刻に一番近い画像と、その瞬間の骨格
           const idx=[r.ph.address,r.ph.top,r.ph.impact,r.ph.finish], tiles=idx.map((k,i)=>({src:snaps.nearest(b[k].t), lms:img[k], label:PHASE_LABEL[i]}));
-          if(tiles.every(x=>x.src)) attachStrip(el,r,composeStrip(tiles,mirror)); else log("snapshot missing");
+          if(tiles.every(x=>x.src)) attachStrip(el,r,composeStrip(tiles,false)); else log("snapshot missing");   // インカメでも反転しない(他の人から見た向き=分析と同じ向きで残す)
         } }
       catch(e){ log("analyze error",e.message); }
       setStatus("待機中(構えると開始)","wait");
@@ -1141,7 +1194,7 @@ async function startCamera(){
   loop();
 }
 function stop(){
-  running=false; snaps.clear(); if(stream) stream.getTracks().forEach(t=>t.stop()); try{ wakeLock&&wakeLock.release(); }catch(e){}
+  running=false; snaps.clear(); clipRec.abort(); if(stream) stream.getTracks().forEach(t=>t.stop()); try{ wakeLock&&wakeLock.release(); }catch(e){}
   if(live){ const vz=vizCard(live.results); if(vz) $("results").prepend(vz); const s=summarize(live.results); if(s){ speak(s+(vz?" 画面に、今日のまとめの図を出しました。":"")); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>まとめ</h3><p>${s}</p>`; $("results").prepend(el); } }
   $("setup").style.display="block"; $("ctrl").style.display="none";
 }
@@ -1551,9 +1604,11 @@ showBase(); loadCamPrefs(); showSuggest();
 function applyPlace(){ const home=curPlace()==="home"; window.HOME_SWING=home; $("homeNote").style.display=home?"block":"none"; try{ localStorage.setItem("place",curPlace()); }catch(e){} }
 try{ const sp=localStorage.getItem("place"); if(sp) $("place").value=sp; }catch(e){}
 $("place").onchange=applyPlace; applyPlace();
+try{ $("recMode").checked=localStorage.getItem("recMode")==="1"; }catch(e){}
+$("recMode").onchange=()=>{ try{ localStorage.setItem("recMode",$("recMode").checked?"1":"0"); }catch(e){} };
 $("showHist").onclick=()=>{ const v=$("histView"); const open=v.style.display==="none"; v.style.display=open?"block":"none"; $("showHist").textContent=open?"記録を閉じる":"記録を見る"; if(open){ renderHistory(); v.scrollIntoView({behavior:"smooth"}); } }; showHow(); demoLoop(); $("bodyKind").onchange=showHow; renderGame();
 $("flip").onclick=flipCamera; $("bodyStop").onclick=()=>{ running=false; }; $("camSwing").onchange=saveCamPrefs; $("camBody").onchange=saveCamPrefs;
-$("clearHist").onclick=async()=>{ if(confirm("スイングの記録・4コマ・体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); await clearSwings(); showBase(); if($("histView").style.display!=="none") renderHistory(); } };
+$("clearHist").onclick=async()=>{ if(confirm("スイングの記録・4コマ・動画・体チェックの基準を消しますか?")){ localStorage.removeItem("swingHistory"); localStorage.removeItem("bodyProfile"); await clearSwings(); await clearClips(); showBase(); if($("histView").style.display!=="none") renderHistory(); } };
 $("galMore").onclick=()=>{ galLimit+=10; renderGallery(); };
 window.DEBUG=new URLSearchParams(location.search).has("debug");
 if(new URLSearchParams(location.search).get("rate")) window.PLAYBACK_RATE=+new URLSearchParams(location.search).get("rate");
