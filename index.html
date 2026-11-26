@@ -65,6 +65,15 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
 .lvup .lvbox{text-align:center;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}.lvup h2{margin:6px 0 2px;font-size:30px;color:#fbbf24}.lvup p{margin:0 0 6px;font-size:18px}
 .lvup>i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 2.4s linear forwards}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+button.big{font-size:19px;padding:16px;border-radius:14px}
+details.howto,details.settings{margin-top:12px}
+.steps{margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.6}.steps li{margin:4px 0}
+.res .headline{font-size:17px;font-weight:700;line-height:1.5;margin:4px 0 6px}
+.res .tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.res.has-issue{border-left:4px solid var(--warn)}.res.has-issue .tag{background:#3a2f12;color:var(--warn)}
+.res.is-good{border-left:4px solid var(--accent)}.res.is-good .tag{background:#123a22;color:var(--accent)}
+#guide .ov.ok{color:#fff}#guide .ov.ng{color:#fde68a}
+#status{font-size:16px;padding:8px 14px}
 </style>
 </head>
 <body>
@@ -72,38 +81,58 @@ small,.note{color:var(--sub);font-size:12px;line-height:1.6}
 <main>
   <div class="card" id="game"></div>
   <div class="card" id="setup">
-    <label for="place">練習する場所</label>
-    <select id="place"><option value="range">打ちっぱなし(ボールを打つ)</option><option value="home">在宅練習(素振り・クラブなしでもOK)</option></select>
-    <div id="homeNote" class="note" style="display:none;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0b110e">
-      🏠 在宅練習モード: クラブを持たない素振りでも分析します。できればタオルを丸めたものや、短い棒(グリップ練習器など)を握るのがおすすめです。手の形が本番に近くなります。<br>
-      ・振る前に天井・照明・家具・人との距離を確認してください。狭い部屋なら、何も持たずに振るのが安全です。<br>
-      ・クラブの重さがないぶん、打ちっぱなしとは数値が少し変わります。記録は「在宅」として分けて保存し、上級者モードは在宅どうしで比べます。<br>
-      ・天井が低くて手が肩まで上がらない、小さめの素振りも1球として数えます。
-    </div>
-    <label for="theme">今日の練習テーマ</label>
-    <select id="theme">
-      <option value="全部">全部</option><option value="前傾">前傾(起き上がり・伸び上がり)</option>
-      <option value="軌道">軌道(アウトサイドイン)</option><option value="頭">頭の上下</option>
-      <option value="回転">回転</option><option value="左腕">左腕</option>
-    </select>
     <div class="row">
-      <div><label for="mode">モード</label>
-        <select id="mode"><option value="初心者">初心者(プロと比較)</option><option value="上級者">上級者(自分と比較)</option></select></div>
-      <div><label for="hand">利き手</label>
-        <select id="hand"><option value="R">右打ち</option><option value="L">左打ち</option></select></div>
+      <div><label for="place">練習する場所</label>
+        <select id="place"><option value="range">打ちっぱなし</option><option value="home">在宅(素振り)</option></select></div>
+      <div><label for="theme">今日のテーマ</label>
+        <select id="theme">
+          <option value="全部">全部</option><option value="前傾">前傾(起き上がり)</option>
+          <option value="軌道">軌道(外から下りる)</option><option value="頭">頭の上下</option>
+          <option value="回転">回転</option><option value="左腕">左腕</option>
+        </select></div>
     </div>
-    <label for="quality">解析の細かさ</label>
-    <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select>
-    <label style="display:flex;align-items:center;gap:10px;margin:12px 0 0;color:var(--text);font-size:15px"><input type="checkbox" id="recMode" style="width:22px;height:22px;accent-color:#16a34a"> 録画モード(1球ごとに短い動画を保存)</label>
-    <p class="note" style="margin:4px 0 0">構えて「チェック開始」からフィニッシュまでを録画します。1球あたり約1〜3MB。新しい30本までスマホに残り、「写真に保存」で写真アプリに入れられます。電池の減りは少し早くなります。</p>
+    <div id="homeNote" class="note" style="display:none;margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0b110e">
+      🏠 在宅練習モード: クラブを持たない素振りでも分析します。タオルを丸めたものや、短い棒(グリップ練習器など)を握るのがおすすめです。<br>
+      ・振る前に天井・照明・家具・人との距離を確認してください。狭い部屋なら、何も持たずに振るのが安全です。<br>
+      ・記録は「在宅」として分けて保存し、上級者モードは在宅どうしで比べます。天井が低くて手が肩まで上がらない、小さめの素振りも1球として数えます。
+    </div>
     <div id="suggest" class="note" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0b110e;color:var(--text)"></div>
-    <p class="note">スマホを体の後ろ側(飛球線の後方)に置き、頭から足まで全身が入るように固定してください。スマホを置いたら、近く(1〜2m)でカメラに手のひらを見せるとスタート。構えて止まると「チェック開始」、フィニッシュのあとに結果を音声で伝えます。続けて打つときは合図なしでOK。1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</p>
-    <label for="camSwing">カメラ</label>
-    <select id="camSwing"><option value="environment">外カメ(画質が良い・おすすめ)</option><option value="user">インカメ(画面を見ながら使える)</option></select>
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="startCam">カメラで開始</button>
-      <button id="pickFile">動画を分析</button>
+    <button class="primary big" id="startCam" style="margin-top:14px">▶ カメラで開始</button>
+    <div class="row" style="margin-top:8px">
+      <button id="pickFile">撮った動画を分析</button>
     </div>
+    <details class="howto"><summary>使い方(はじめての方へ)</summary>
+      <ol class="steps">
+        <li>スマホを<b>体の後ろ側(飛球線の後方)</b>に置き、頭から足まで全身が入るように固定します。</li>
+        <li>近く(1〜2m)でカメラに<b>手のひらを見せる</b>とスタート。</li>
+        <li>構えて止まると「チェック開始」(2本目からは「ピッ」の音)。</li>
+        <li>フィニッシュのあと、結果を<b>声と画面</b>で伝えます。続けて打つときは合図なしでOK。</li>
+        <li>1分ほど体が映らないと一時停止します。イヤホンをつないでおくと便利です。</li>
+      </ol>
+    </details>
+    <details class="settings"><summary>くわしい設定</summary>
+      <div class="row">
+        <div><label for="mode">モード</label>
+          <select id="mode"><option value="初心者">初心者(プロと比較)</option><option value="上級者">上級者(自分と比較)</option></select></div>
+        <div><label for="hand">利き手</label>
+          <select id="hand"><option value="R">右打ち</option><option value="L">左打ち</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="vAmount">しゃべる量</label>
+          <select id="vAmount"><option value="short">ひとこと</option><option value="normal" selected>ふつう</option><option value="detail">くわしく</option></select></div>
+        <div><label for="vRate">声の速さ</label>
+          <select id="vRate"><option value="0.9">ゆっくり</option><option value="1.05" selected>ふつう</option><option value="1.25">はやめ</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="camSwing">カメラ</label>
+          <select id="camSwing"><option value="environment">外カメ(画質が良い)</option><option value="user">インカメ(画面を見ながら)</option></select></div>
+        <div><label for="quality">解析の細かさ</label>
+          <select id="quality"><option value="1">ふつう(おすすめ)</option><option value="0">軽い(古いスマホ向け)</option></select></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;margin:14px 0 0;color:var(--text);font-size:15px"><input type="checkbox" id="recMode" style="width:22px;height:22px;accent-color:#16a34a"> 録画モード(1球ごとに短い動画を保存)</label>
+      <p class="note" style="margin:4px 0 0">構えて「チェック開始」からフィニッシュまでを録画します。1球あたり約1〜3MB。新しい30本までスマホに残り、「写真に保存」で写真アプリに入れられます。電池の減りは少し早くなります。</p>
+      <p class="note" style="margin:6px 0 0">処理が追いつかないときは、自動で「軽い」に切り替えます。</p>
+    </details>
     <input type="file" id="file" accept="video/*" hidden>
   </div>
 
@@ -180,6 +209,8 @@ const DRILL={
   xfactor:"練習は、右ひざの向きを変えないまま、肩だけ深く回す素振りがおすすめです。",
   lead_elbow:"練習は、左手一本で短く持ってのハーフスイングがおすすめです。",
 };
+// 課題の呼び名(声・まとめで使う)
+const ISSUE_NAME={spine_loss:"インパクトでの起き上がり",early_ext:"伸び上がり",over_top:"手が外から下りる動き",head_rise:"頭が上がる動き",shoulder_turn:"肩の回転の浅さ",lead_elbow:"左ひじの曲がり",xfactor:"ねじれの少なさ",spine_addr:"アドレスの前傾の浅さ",head_sink:"頭の沈み込み"};
 const NAME={spine_loss:"インパクトでの起き上がり",early_ext:"伸び上がり",spine_addr:"アドレスの前傾",head_rise:"頭の上下",
   path_loop:"手の通り道",shoulder_turn:"肩の回転",lead_elbow:"トップでの腕の伸び",hip_turn:"腰の回転"};
 const UNIT={spine_loss:"度",spine_addr:"度",shoulder_turn:"度",hip_turn:"度",lead_elbow:"度",early_ext:"",head_rise:"",path_loop:""};
@@ -187,6 +218,8 @@ const PRO={shoulder_turn:[">=",85,"約90度"],lead_elbow:[">=",160,"160度以上
   spine_loss:["<=",8,"8度以内"],early_ext:["<=",0.05,"ほぼ0"],head_rise:["abs<=",0.06,"ほぼ0"],path_loop:["<=",0,"0以下"]};
 const SCALE={shoulder_turn:15,lead_elbow:15,spine_loss:6,early_ext:0.08,path_loop:0.25,spine_addr:4,head_rise:0.06};
 const ADV_DIR={spine_loss:1,early_ext:1,path_loop:1,head_rise:0,shoulder_turn:-1,lead_elbow:-1,spine_addr:0};
+// 1台のスマホ映像でありえる範囲。これを外れたら測定ミスとみなす
+const SANE={spine_addr:[0,75],spine_loss:[-40,40],early_ext:[-1,1],head_rise:[-0.6,0.6],shoulder_turn:[0,150],hip_turn:[0,120],lead_elbow:[60,181],path_loop:[-2,2]};
 const ADV_KEY={spine_loss:"spine_loss",early_ext:"early_ext",path_loop:"over_top",shoulder_turn:"shoulder_turn",lead_elbow:"lead_elbow",spine_addr:"spine_addr",head_rise:"head_rise"};
 
 const DRILL_DETAIL={"spine_loss": {"drill": "ゴルフバッグ(またはイス)をお尻のすぐ後ろに置き、お尻が軽く触れた状態で構えます。インパクトまでお尻が離れないように、ハーフスイングで素振り→実際に打つ、を10回ずつ。", "stretch": "太もも裏のストレッチ: 片足をかかとから前に出し、背すじを伸ばしたまま股関節からお辞儀する。前傾が保てないのは、太もも裏や股関節まわりの硬さが原因のこともあります。"}, "early_ext": {"drill": "ゴルフバッグをお尻の後ろに置き、切り返しからインパクトまで、お尻をバッグに押し付けたまま回るイメージで打ちます。最初はハーフスイング、慣れたらスリークォーターへ。", "stretch": "股関節の前側のストレッチ: 片ひざ立ちになり、腰を前へ押し出して後ろ足の付け根を伸ばす。"}, "spine_addr": {"drill": "クラブを背中に縦に当て、頭・背中・お尻の3か所がクラブに触れたまま、股関節からお辞儀してアドレスを作ります。鏡やスマホで角度を確認。", "stretch": "太もも裏のストレッチ: 片足をかかとから前に出し、背すじを伸ばしたまま股関節からお辞儀する。"}, "head_rise": {"drill": "インパクト後もボールがあった場所を1秒見続けてから顔を上げます。ティーの位置を見続けるつもりで10球。", "stretch": null}, "head_sink": {"drill": "ひざの曲げ具合を変えないことだけを意識して、ハーフスイングで素振り。慣れたらボールを打つ。", "stretch": null}, "over_top": {"drill": "ボールの向こう側(体から遠い側)、ボール1個分外側・少し目標寄りにヘッドカバーを置きます。外から下ろすとカバーに当たるので、当てないように打ちます。最初はハーフスイングで。切り返しで右ひじを右腰の前に落とす素振りも効果的です。", "stretch": null}, "plane_under": {"drill": "ボールの手前(体に近い側・後ろ寄り)にヘッドカバーを置き、それに当たらないように下ろして打ちます。", "stretch": null}, "shoulder_turn": {"drill": "クラブを胸の前で両腕で抱え、アドレスの前傾のまま、背中が目標を向くまで肩を回します。左右10回ずつ。", "stretch": "胸と背中のストレッチ: 横向きに寝てひざを曲げ、上の腕を本を開くように後ろへ開いて胸を開く(左右10回)。"}, "xfactor": {"drill": "右ひざの向きを変えないことを意識して、肩だけ深く回すハーフスイング。腰の回転を少し我慢する感覚をつかみます。", "stretch": "胸と背中のストレッチ: 横向きに寝てひざを曲げ、上の腕を本を開くように後ろへ開いて胸を開く(左右10回)。"}, "lead_elbow": {"drill": "左手一本でクラブを短く持ち、左ひじを伸ばしたまま腰から腰までのハーフスイングで10球。", "stretch": "肩の後ろ側のストレッチ: 左腕を胸の前に伸ばし、右手で胸に引き寄せる。"}, "head_back": {"drill": "ボールの少し右後ろの一点を見続け、頭の位置を変えないつもりでハーフスイング。", "stretch": null}, "head_impact": {"drill": "ボールの右側(後ろ側)を見たままインパクトする意識で打ちます。頭がボールより前に出ないように。", "stretch": null}, "hip_back": {"drill": "右腰のすぐ外側にゴルフバッグを置き、テークバックで腰がバッグに当たらないように回ります。", "stretch": null}, "hip_impact": {"drill": "両足をそろえて構え、テークバックで左足を目標側に踏み出し、踏み込みと同時に打ちます。体重移動の順番が身につきます。", "stretch": null}};
@@ -194,7 +227,7 @@ const SAFETY="ストレッチは反動をつけず、痛みの出ない範囲で
 function drillHtml(keys){
   const ks=[...new Set(keys)].filter(k=>DRILL_DETAIL[k]); if(!ks.length) return "";
   let h='<details><summary>練習メニューとストレッチを見る</summary>', st=false;
-  for(const k of ks){ const d=DRILL_DETAIL[k]; h+=`<p>◆ <b>ドリル</b>: ${d.drill}</p>`; if(d.stretch){ h+=`<p>◇ <b>ストレッチ</b>: ${d.stretch}</p>`; st=true; } }
+  for(const k of ks){ const d=DRILL_DETAIL[k]; h+=`<p>◆ <b>ドリル</b>: ${lr(d.drill)}</p>`; if(d.stretch){ h+=`<p>◇ <b>ストレッチ</b>: ${lr(d.stretch)}</p>`; st=true; } }
   if(st) h+=`<p class="note">※${SAFETY}</p>`;
   return h+'</details>';
 }
@@ -214,6 +247,11 @@ const SHORT={
 // ---------------------------------------------------------------- 数学の道具
 const num=v=>typeof v==="number"&&isFinite(v);
 const deg=r=>r*180/Math.PI;
+// 左打ちのときは、アドバイスの「左」と「右」を入れ替える(「左右」はそのまま)
+const isLefty=()=>{ const h=document.getElementById("hand"); return !!(h&&h.value==="L"); };
+function lr(s){ if(!s||!isLefty()) return s; return String(s).replace(/左右/g,"\u0001").replace(/[左右]/g,c=>c==="左"?"右":"左").replace(/\u0001/g,"左右"); }
+// 1コマだけだとブレるので、前後のコマの中央値で測る(f0..f1 の範囲に収める)
+function medAround(fn,f,r,f0,f1){ const vs=[]; for(let k=Math.max(f0,f-r);k<=Math.min(f1,f+r);k++){ const v=fn(k); if(num(v)) vs.push(v); } return vs.length? median(vs) : fn(f); }
 function interp(x,xp,fp){ if(x<=xp[0])return fp[0]; for(let i=1;i<xp.length;i++){ if(x<=xp[i]){ const t=(x-xp[i-1])/((xp[i]-xp[i-1])||1e-9); return fp[i-1]+t*(fp[i]-fp[i-1]); } } return fp[fp.length-1]; }
 function gradient(a){ const n=a.length,g=new Array(n); for(let i=0;i<n;i++){ if(n<2){g[i]=0;continue;} g[i]= i===0? a[1]-a[0] : i===n-1? a[n-1]-a[n-2] : (a[i+1]-a[i-1])/2; } return g; }
 function argmax(a,lo=0,hi=a.length){ let b=lo; for(let i=lo;i<hi;i++) if(a[i]>a[b]) b=i; return b; }
@@ -289,6 +327,8 @@ function findSwings(imgM,fps){
 function spineTilt(f){ const hip=center(f,L_HIP,R_HIP), sh=center(f,L_SH,R_SH); return deg(Math.atan2(Math.abs(sh[0]-hip[0]),Math.max(hip[1]-sh[1],1e-6))); }
 function yaw(w,a,b){ return deg(Math.atan2(w[a][2]-w[b][2], w[a][0]-w[b][0])); }
 function turn(world,a,b,f0,f1){ let d=Math.abs(yaw(world[f1],a,b)-yaw(world[f0],a,b)); return d>180? 360-d : d; }
+// 回転は奥行き(z)の推定がブレやすいので、トップ前後のコマで測った値の中央値にする
+function turnStable(world,a,b,f0,f1,lo,hi){ const vs=[]; for(let k=Math.max(lo,f1-2);k<=Math.min(hi,f1+2);k++) vs.push(turn(world,a,b,f0,k)); return median(vs); }
 function angle3(w,a,b,c){ const v1=[0,1,2].map(i=>w[a][i]-w[b][i]), v2=[0,1,2].map(i=>w[c][i]-w[b][i]);
   const d=v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2], n1=Math.hypot(...v1), n2=Math.hypot(...v2); return deg(Math.acos(Math.max(-1,Math.min(1,d/(n1*n2+1e-9))))); }
 function isFaceOn(imgM,world,f){
@@ -301,13 +341,16 @@ function isFaceOn(imgM,world,f){
 }
 function metrics(imgM,world,ph,lefty){
   const {address:a,top:t,impact:i}=ph;
+  // アドレスは止まっている時間なので前後3コマ、トップ・インパクトは速く動くので前後1コマの中央値で測る(1コマのブレで判定が変わらないように)
   const sh=center(imgM[a],L_SH,R_SH), hp=center(imgM[a],L_HIP,R_HIP); const torso=Math.hypot(sh[0]-hp[0],sh[1]-hp[1])||1e-6;
   const toBall= imgM[a][NOSE][0]>=hp[0]? 1 : -1;
   const hipx=f=>(imgM[f][L_HIP][0]+imgM[f][R_HIP][0])/2;
-  const sa=spineTilt(imgM[a]);
-  const m={ spine_addr:Math.round(sa), spine_loss:Math.round(sa-spineTilt(imgM[i])),
-    early_ext:+((hipx(i)-hipx(a))*toBall/torso).toFixed(2), head_rise:+((imgM[a][NOSE][1]-imgM[i][NOSE][1])/torso).toFixed(2),
-    shoulder_turn:Math.round(turn(world,L_SH,R_SH,a,t)), hip_turn:Math.round(turn(world,L_HIP,R_HIP,a,t)),
+  const sa=medAround(k=>spineTilt(imgM[k]),a,3,0,t-1), si=medAround(k=>spineTilt(imgM[k]),i,1,t+1,imgM.length-1);
+  const hxA=medAround(hipx,a,3,0,t-1), hxI=medAround(hipx,i,1,t+1,imgM.length-1);
+  const noseY=k=>imgM[k][NOSE][1], nyA=medAround(noseY,a,3,0,t-1), nyI=medAround(noseY,i,1,t+1,imgM.length-1);
+  const m={ spine_addr:Math.round(sa), spine_loss:Math.round(sa-si),
+    early_ext:+((hxI-hxA)*toBall/torso).toFixed(2), head_rise:+((nyA-nyI)/torso).toFixed(2),
+    shoulder_turn:Math.round(turnStable(world,L_SH,R_SH,a,t,a+1,i-1)), hip_turn:Math.round(turnStable(world,L_HIP,R_HIP,a,t,a+1,i-1)),
     lead_elbow:Math.round(lefty? angle3(world[t],R_SH,R_EL,R_WR) : angle3(world[t],L_SH,L_EL,L_WR)), path_loop:NaN };
   // 手の通り道(同じ高さで、上げる手と下ろす手の位置の差)
   const wr=f=>[(imgM[f][L_WR][0]+imgM[f][R_WR][0])/2,(imgM[f][L_WR][1]+imgM[f][R_WR][1])/2];
@@ -318,6 +361,8 @@ function metrics(imgM,world,ph,lefty){
     const loops=zone.map(k=>(wr(k)[0]-interp(wr(k)[1],by,bx))*toBall/torso);
     m.path_loop=+(loops.reduce((s,v)=>s+v,0)/loops.length).toFixed(2);
   }
+  // ありえない値(関節の取り違えなど)は「測れなかった」扱いにして、間違ったアドバイスを出さない
+  for(const [k,[lo,hi]] of Object.entries(SANE)) if(num(m[k]) && (m[k]<lo||m[k]>hi)) m[k]=NaN;
   return m;
 }
 
@@ -341,9 +386,13 @@ function adviseStd(m,theme){
     else if(m.shoulder_turn-m.hip_turn<20) tips.回転.push(["xfactor",(20-(m.shoulder_turn-m.hip_turn))/30,"肩と腰が一緒に回っていて、ねじれが少なめです。腰の回転を少し我慢して、肩を深く回しましょう。"]);
     good.回転=`肩がおよそ${m.shoulder_turn}度回っていて、しっかり捻転できています。`; }
   if(m.lead_elbow<150) tips.左腕.push(["lead_elbow",(150-m.lead_elbow)/30,"トップで左腕の肘が曲がっています。トップを少し小さくしてでも、左腕を伸ばしたまま上げましょう。"]);
-  good.左腕="トップで左腕がしっかり伸びています。";
+  good.左腕= num(m.lead_elbow)? "トップで左腕がしっかり伸びています。" : "今回はトップの左腕をうまく測れませんでした。";
+  if(!num(m.spine_addr)||!num(m.spine_loss)) good.前傾="今回は前傾の角度をうまく測れませんでした。";
+  if(!num(m.head_rise)) good.頭="今回は頭の高さをうまく測れませんでした。";
   let pool;
-  if(theme==="全部"){ pool=Object.values(tips).flat(); if(!pool.length) return [["",0,"全体的にバランスの良いスイングです。この感じを続けましょう。"]]; }
+  const measured=["spine_addr","spine_loss","head_rise","shoulder_turn","lead_elbow","early_ext"].filter(k=>num(m[k])&&!(k==="shoulder_turn"&&m[k]<30)).length;
+  if(theme==="全部"){ pool=Object.values(tips).flat();
+    if(!pool.length) return [["",0, measured>=4? "全体的にバランスの良いスイングです。この感じを続けましょう。" : "今回はうまく測れない部分が多かったです。頭から足まで全身が映る位置にスマホを置いてください。"]]; }
   else { pool=tips[theme]||[]; if(!pool.length) return [["",0,good[theme]]]; }
   return pool.sort((x,y)=>y[1]-x[1]).slice(0,2);
 }
@@ -587,11 +636,24 @@ function proRows(m){
 let voice=null;
 function pickVoice(){ const vs=speechSynthesis.getVoices(); voice=vs.find(v=>/ja(-|_)JP/i.test(v.lang))||vs.find(v=>/^ja/i.test(v.lang))||null; }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-function speak(text,rate){ log("SPEAK:",text);
+// 短い「ピッ」音(チェック開始の合図など。声より早く、結果の読み上げとも重ならない)
+let actx=null;
+function unlockAudio(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch(e){} }
+function beep(freq=880,ms=120,times=1){ try{ if(!actx) return false; const t0=actx.currentTime;
+  for(let k=0;k<times;k++){ const o=actx.createOscillator(), g=actx.createGain(); o.type="sine"; o.frequency.value=freq;
+    const s=t0+k*(ms/1000+0.08); g.gain.setValueAtTime(0.0001,s); g.gain.exponentialRampToValueAtTime(0.35,s+0.01); g.gain.exponentialRampToValueAtTime(0.0001,s+ms/1000);
+    o.connect(g).connect(actx.destination); o.start(s); o.stop(s+ms/1000+0.02); }
+  return true; }catch(e){ return false; } }
+const voiceRate=()=>{ const s=document.getElementById("vRate"); return s? +s.value : 1.05; };
+const voiceAmount=()=>{ const s=document.getElementById("vAmount"); return s? s.value : "normal"; };   // short=ひとこと / normal=ふつう / detail=くわしく
+// opt.interrupt: しゃべり途中の古い内容を止めてから話す(新しい1本の結果など、古い話を聞く意味がないとき)
+function speak(text,rate,opt){ log("SPEAK:",text); opt=opt||{};
   // しゃべり終わったら解決する(音声が使えない環境では、文字数からおおよその時間で解決)
   const est=new Promise(r=>setTimeout(r, Math.min(9000, 400+text.length*(window.FAST_SPEECH?5:140))));
   if(!("speechSynthesis" in window)) return est;
-  const u=new SpeechSynthesisUtterance(text); u.lang="ja-JP"; if(voice) u.voice=voice; u.rate=rate||1.05;
+  if(opt.interrupt && (speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel();
+  try{ speechSynthesis.resume(); }catch(e){}   // iPhoneで音声が止まったままになるのを防ぐ
+  const u=new SpeechSynthesisUtterance(text); u.lang="ja-JP"; if(voice) u.voice=voice; u.rate=rate||voiceRate();
   const end=new Promise(r=>{ u.onend=r; u.onerror=r; });
   speechSynthesis.speak(u);
   return Promise.race([end, new Promise(r=>setTimeout(r, Math.min(15000, 1500+text.length*250)))]);
@@ -882,6 +944,7 @@ function drawTurnTop(c,cx,cy,maxDeg,u){
 }
 // ---- 1枚にまとめて描く
 function drawSummaryViz(c,fo,u){
+  if(!c._lr){ const f=c.fillText.bind(c); c.fillText=(t,x,y,mw)=> mw===undefined? f(lr(String(t)),x,y) : f(lr(String(t)),x,y,mw); c._lr=1; }   // 左打ちは図の文字も左右を入れ替える
   const W=720,H=1000; c.fillStyle="#0f1512"; c.fillRect(0,0,W,H);
   c.fillStyle="#16a34a"; c.fillRect(0,0,W,86);
   c.drawImage(fo.mascot,14,8,70,70);
@@ -902,7 +965,7 @@ function vizCard(rs){
   const el=document.createElement("div"); el.className="card res viz";
   el.innerHTML=`<h3>今日のまとめ(絵と動き)</h3><canvas width="720" height="1000" style="width:100%;border-radius:10px"></canvas>
 <div class="row" style="margin-top:8px"><button class="vzPng">画像で保存</button><button class="vzMov">動画で保存(6秒)</button></div>
-${DRILL_DETAIL[fo.key]? `<details open><summary>練習メニュー</summary><p>◆ ${DRILL_DETAIL[fo.key].drill}</p>${DRILL_DETAIL[fo.key].stretch?`<p>◇ ${DRILL_DETAIL[fo.key].stretch}</p>`:""}</details>`:""}
+${DRILL_DETAIL[fo.key]? `<details open><summary>練習メニュー</summary><p>◆ ${lr(DRILL_DETAIL[fo.key].drill)}</p>${DRILL_DETAIL[fo.key].stretch?`<p>◇ ${lr(DRILL_DETAIL[fo.key].stretch)}</p>`:""}</details>`:""}
 <p class="note vzMsg"></p>`;
   const cv=el.querySelector("canvas"), c=cv.getContext("2d"), t0=performance.now();
   const loop=()=>{ if(!el.isConnected && el.dataset.started) return; el.dataset.started=1; drawSummaryViz(c,fo,((performance.now()-t0)%3000)/3000); requestAnimationFrame(loop); };
@@ -949,18 +1012,26 @@ function analyzeSwing(img,world,fps,ratio,lo,hi,no){
   // 体チェックの基準があれば、原因が「体の硬さ」か「動かし方」かを一言そえる
   for(const [k,note] of bodyNotes(m)){ if(keys.includes(k)||theme==="全部"){ text.push(note); break; } }
   if(curPlace()==="home") text.push("在宅(素振り)の結果です。クラブの重さがないので、打ちっぱなしの数値とは少し違うことがあります。");
-  const voiceText=items.map(x=>SHORT[x[0]]||x[2]).concat(keys.length&&DRILL[keys[0]]? [DRILL[keys[0]]] : []);
+  const voiceText=items.map(x=>SHORT[x[0]]||x[2]).concat(keys.length&&DRILL[keys[0]]? [DRILL[keys[0]]] : []).map(lr);
   let gameVoice=""; try{ gameVoice=gameOnSwing(keys); }catch(e){ log("game",e.message); }
   let viz=null; try{ viz=vizCapture(imgM,ph); }catch(e){}
-  return {no,faceOn:false,ph,m,keys,text,voiceText,gameVoice,viz,lines: lines || proRows(m), mode};
+  // 画面に大きく出す一言(一番大事な課題、なければ良かった点)
+  const headline=lr(keys.length? (SHORT[keys[0]]||items[0][2]) : items[0][2]);
+  return {no,faceOn:false,ph,m,keys,text:text.map(lr),voiceText,headline,gameVoice,viz,lines: lines || proRows(m), mode};
 }
 function renderResult(r){
   const el=document.createElement("div"); el.className="card res";
   const head=`<h3>${r.no}本目</h3>`;
   if(r.faceOn){ el.innerHTML=head+`<p>${r.text[0]}</p>`; }
   else {
+    // 先に「何を直すか」、数値は折りたたみの中へ
     const rows=r.lines.map(l=>`<div class="metric"><span>${l[0]}</span><b class="${l[2]===undefined?'':(l[2]?'ok':'ng')}">${l[1]}</b></div>`).join("");
-    el.innerHTML=head+rows+`<ul>${r.text.map(t=>`<li>${t}</li>`).join("")}</ul>`+(r.keys.length&&DRILL[r.keys[0]]?`<p class="note">${DRILL[r.keys[0]]}</p>`:"")+drillHtml(r.keys);
+    const okCnt=r.lines.filter(l=>l[2]===true).length, all=r.lines.filter(l=>l[2]!==undefined).length;
+    el.classList.add(r.keys.length? "has-issue" : "is-good");
+    el.innerHTML=`<h3>${r.no}本目 <span class="tag">${r.keys.length? "課題あり" : "ナイス"}</span></h3>`+
+      `<p class="headline">${r.headline||r.text[0]}</p>`+
+      `<ul>${(r.keys.length? r.text : r.text.slice(1)).map(t=>`<li>${t}</li>`).join("")}</ul>`+(r.keys.length&&DRILL[r.keys[0]]?`<p class="note">${lr(DRILL[r.keys[0]])}</p>`:"")+
+      `<details><summary>数値を見る${all? `(目安クリア ${okCnt}/${all})` : ""}</summary>${rows}</details>`+drillHtml(r.keys);
   }
   $("results").prepend(el);
   return el;
@@ -970,10 +1041,12 @@ function summarize(rs){
   const cnt={}; valid.forEach(r=>[...new Set(r.keys)].forEach(k=>cnt[k]=(cnt[k]||0)+1));
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
   let msg=`${valid.length}本のまとめです。`;
-  const nm={spine_loss:"インパクトでの起き上がり",early_ext:"伸び上がり",over_top:"手が外から下りる動き",head_rise:"頭が上がる動き",shoulder_turn:"肩の回転の浅さ",lead_elbow:"左ひじの曲がり",xfactor:"ねじれの少なさ",spine_addr:"アドレスの前傾の浅さ",head_sink:"頭の沈み込み"};
+  const nm=ISSUE_NAME;
+  const good=valid.filter(r=>!r.keys.length).length;
+  if(good) msg+=`課題なしのスイングが${good}本ありました。`;
   if(top && top[1]>=2) msg+=`${top[1]}本で${nm[top[0]]||top[0]}が出ていました。これが今日の一番の課題です。`+(DRILL[top[0]]? " "+DRILL[top[0]].replace("練習は、","今日の練習には、") : "");
-  else msg+="毎回ちがう点が出ていて、大きな癖は見えませんでした。";
-  return msg;
+  else if(!good || good<valid.length) msg+="毎回ちがう点が出ていて、大きな癖は見えませんでした。";
+  return lr(msg);
 }
 
 // ---------------------------------------------------------------- 姿勢推定
@@ -1032,6 +1105,13 @@ async function flipCamera(){
 }
 function saveCamPrefs(){ try{ localStorage.setItem("camPrefs",JSON.stringify({swing:$("camSwing").value,body:$("camBody").value})); }catch(e){} }
 function loadCamPrefs(){ try{ const p=JSON.parse(localStorage.getItem("camPrefs")||"{}"); if(p.swing) $("camSwing").value=p.swing; if(p.body) $("camBody").value=p.body; }catch(e){} }
+// スイングの結果を、カメラ映像の上に大きく出す(スマホを見たときにすぐ分かるように)。10秒で消える
+let overlayTimer=null;
+function showOverlay(r){ if(document.body.classList.contains("bodymode")) return;
+  clearTimeout(overlayTimer);
+  const ok=!r.faceOn && !r.keys.length;
+  setGuide(`<span class="ov ${ok?"ok":"ng"}">${r.faceOn? r.text[0] : (r.headline||"")}</span>`, `${r.no}本目 ${r.faceOn? "" : ok? "◎" : "△"}`);
+  overlayTimer=setTimeout(()=>{ if(!document.body.classList.contains("bodymode")) setGuide(""); },10000); }
 function setGuide(text,big){ const g=$("guide"); if(!text){ g.style.display="none"; return; } g.style.display="block"; g.innerHTML=(big!==undefined? `<small>${big}</small>`:"")+text; }
 function draw(src,lms,status){
   const w=src.videoWidth||src.width, h=src.videoHeight||src.height; if(!w) return;
@@ -1079,7 +1159,7 @@ window.isPalm=isPalm;
 // 構えて止まったら「チェック開始」と伝え、フィニッシュから約1.2秒後に結果を伝える。
 class Live{
   constructor(ratio){ this.buf=[]; this.ratio=ratio; this.lastImpactT=-1e9; this.lastCheck=0; this.armed=false; this.armedAt=-1e9; this.no=0; this.results=[];
-    this.active=false; this.palmSince=null; this.lastBodyT=0; }
+    this.active=false; this.palmSince=null; this.lastBodyT=0; this.armCount=0; this.prevKey=""; this.sameCnt=0; }
   // 手のひらが見えたかどうかを毎回受け取る。約0.8秒続いたらスタート
   palm(t,seen){
     if(this.active) return;
@@ -1112,19 +1192,28 @@ class Live{
     const still=(Math.max(...wy)-Math.min(...wy))<0.03 && (Math.max(...wx)-Math.min(...wx))<0.03;
     const f=recent[recent.length-1].img, hipY=(f[L_HIP][1]+f[R_HIP][1])/2;
     const imgM=aspect([f],this.ratio)[0];
-    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; this.armedAt=t; setStatus("チェック中","busy"); speak("チェック開始"); clipRec.start(); }
+    if(still && wy[wy.length-1]>hipY && spineTilt(imgM)>15 && t-this.lastImpactT>2500){ this.armed=true; this.armedAt=t; setStatus("チェック中","busy");
+      // 最初の1回だけ声で「チェック開始」、2本目からは短い音だけ(毎回しゃべるとうるさく、結果の読み上げとも重なるため)
+      if(!(this.armCount++>0 && beep(990,110,1))) speak("チェック開始");
+      clipRec.start(); }
   }
   voiceFor(r){
-    // 同じ課題が続くときは短く。練習ドリルは、課題が変わったときと5本ごとに伝える
-    const top=r.keys[0]||"", prev=this.prevKey; this.prevKey=top;
-    const short=r.voiceText.slice(0, r.keys.length? r.keys.length : 1).filter(t=>!t.startsWith("練習は"));
-    let text = (top && top===prev)? "前の1本と同じく、"+short[0] : short.join(" ");
-    if(top && DRILL[top] && (top!==prev || r.no%5===0)) text+=" "+DRILL[top];
-    if(!top) text=r.voiceText.join(" ");
+    // 一番大事な1つだけを短く。同じ課題が続くときはさらに短く、直ったらほめる。
+    // 練習ドリルは、課題が変わったときと5本ごと(「ひとこと」設定のときは言わない)
+    const amt=voiceAmount(), top=r.keys[0]||"", prev=this.prevKey; this.prevKey=top;
+    const short=r.voiceText.filter(t=>!t.startsWith("練習は"));
+    let text="";
+    if(prev && prev!==top && !r.keys.includes(prev)) text+=`さっきの${lr(ISSUE_NAME[prev])||"課題"}は良くなりました。`;
+    if(!top) text+=short[0]||"";
+    else if(top===prev){ this.sameCnt=(this.sameCnt||1)+1; text+= amt==="detail"? "前の1本と同じく、"+short[0] : `まだ${lr(ISSUE_NAME[top])||"同じ課題"}が出ています。`; }
+    else { this.sameCnt=1; text+= amt==="detail"? short.join(" ") : short[0]; }
+    if(top && DRILL[top] && amt!=="short" && (top!==prev || r.no%5===0)) text+=" "+lr(DRILL[top]);
+    if(top && this.sameCnt===3 && amt!=="short") text+=" 3本続いているので、ハーフスイングでゆっくり確かめてみましょう。";
     return text+(r.gameVoice? " "+r.gameVoice : "");
   }
   scan(t){
     const b=this.buf; if(b.length<30) return;
+    if(!this.armed) return;   // 構える前のスイングは使わないので、重い計算もしない(電池と発熱の節約)
     const img=fillSmooth(b.map(f=>f.img)), world=fillSmooth(b.map(f=>f.world)); if(!img) return;
     const fps=this.fps(), imgM=aspect(img,this.ratio);
     for(const [lo,hi,p] of findSwings(imgM,fps)){
@@ -1135,7 +1224,8 @@ class Live{
       if(seen<0.7*(Math.min(hi,b.length)-lo)) continue;            // 途中で体が映っていない
       this.lastImpactT=tImp; this.armed=false;
       try{ const r=analyzeSwing(img,world,fps,this.ratio,lo,Math.min(hi,b.length),++this.no); r.t=tImp; this.results.push(r); window.swingResults.push(r); const el=renderResult(r); clipRec.finish(r,el);
-        speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r)));
+        speak(`${r.no}本目。`+(r.faceOn? r.text[0] : this.voiceFor(r)),undefined,{interrupt:true});
+        showOverlay(r);
         if(!r.faceOn){ // 4コマ: 各場面の時刻に一番近い画像と、その瞬間の骨格
           const idx=[r.ph.address,r.ph.top,r.ph.impact,r.ph.finish], tiles=idx.map((k,i)=>({src:snaps.nearest(b[k].t), lms:img[k], label:PHASE_LABEL[i]}));
           if(tiles.every(x=>x.src)) attachStrip(el,r,composeStrip(tiles,false)); else log("snapshot missing");   // インカメでも反転しない(他の人から見た向き=分析と同じ向きで残す)
@@ -1154,7 +1244,7 @@ window.simulateLive=function(frames,fps,ratio){
   return L.results.map(r=>({no:r.no,t:r.t,faceOn:r.faceOn,m:r.m,keys:r.keys,voice:r.voiceText}));
 };
 async function startCamera(){
-  speak("準備をしています"); // iPhoneでは、ボタンを押したときに一度話しておかないと音声が出ない
+  unlockAudio(); speak("準備をしています"); // iPhoneでは、ボタンを押したときに一度話しておかないと音声が出ない
   $("setup").style.display="none"; $("stage").style.display="block"; $("ctrl").style.display="flex";
   setStatus("カメラを準備中…","wait");
   try{
@@ -1169,13 +1259,14 @@ async function startCamera(){
   live=new Live(v.videoWidth/v.videoHeight); running=true;
   setStatus("手のひらを見せるとスタート","wait");
   speak("準備ができました。スマホを置いたら、カメラに手のひらを見せてください。");
-  let n=0;
+  let lastHandT=0, errs=0;
   const loop=async()=>{ if(!running) return;
     if(!frameReady(v)){ requestAnimationFrame(loop); return; }
     const t=performance.now();
+    try{
     if(!live.active){
-      // 手のひら待ちの間は、手の検出だけを動かす(電池と処理の節約)
-      if(n++%2===0){ await hands.send({image:v}); const r=lastHands; let seen=false;
+      // 手のひら待ちの間は、手の検出だけを1秒に約8回だけ動かす(電池と処理の節約)
+      if(t-lastHandT>=120){ lastHandT=t; await hands.send({image:v}); const r=lastHands; let seen=false;
         if(r&&r.multiHandLandmarks) r.multiHandLandmarks.forEach((lm,i)=>{ const lab=r.multiHandedness?.[i]?.label; if(isPalm(lm,lab,true)) seen=true; });
         live.palm(t,seen);
         if(seen && !live.active) setStatus("手のひらを確認中…","busy");
@@ -1189,14 +1280,25 @@ async function startCamera(){
     if(!live.active){ requestAnimationFrame(loop); return; }
     if(!L.img && !live.armed) setStatus("全身が映るように立ってください","wait");
     else if(!live.armed && $("status").textContent!=="待機中(構えると開始)") setStatus("待機中(構えると開始)","wait");
-    const f=live.fps(); if(f<12 && live.buf.length>60 && !live.warned){ live.warned=true; speak("処理が追いついていません。解析の細かさを軽いにしてください。"); }
+    const f=live.fps();
+    if(f<12 && live.buf.length>60 && !live.warned){ live.warned=true;
+      // 処理が追いつかないときは、自動で「軽い」に切り替える
+      if($("quality").value!=="0"){ $("quality").value="0"; try{ saveSettings(); }catch(e){} pose.setOptions({modelComplexity:0}); live.buf=[]; speak("処理が追いつかないので、解析を軽くしました。"); }
+      else speak("処理が追いついていません。ほかのアプリを閉じると良くなることがあります。"); }
+    errs=0;
+    }catch(e){
+      // 1コマの失敗で止まらないようにする。何度も続くときだけ止めて知らせる
+      log("frame error",e&&e.message); if(++errs>30){ running=false; fail("映像の解析が続けて失敗しました。ページを開き直してください。("+(e&&e.message)+")"); return; }
+    }
     requestAnimationFrame(loop); };
   loop();
 }
 function stop(){
   running=false; snaps.clear(); clipRec.abort(); if(stream) stream.getTracks().forEach(t=>t.stop()); try{ wakeLock&&wakeLock.release(); }catch(e){}
   if(live){ const vz=vizCard(live.results); if(vz) $("results").prepend(vz); const s=summarize(live.results); if(s){ speak(s+(vz?" 画面に、今日のまとめの図を出しました。":"")); const el=document.createElement("div"); el.className="card res"; el.innerHTML=`<h3>まとめ</h3><p>${s}</p>`; $("results").prepend(el); } }
+  clearTimeout(overlayTimer); setGuide(""); $("stage").style.display="none";
   $("setup").style.display="block"; $("ctrl").style.display="none";
+  $("results").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 // ---------------------------------------------------------------- 体チェック(可動域)
@@ -1595,12 +1697,20 @@ async function analyzeFile(file){
   window.analysisDone=true;
 }
 
+// 画面ロックの防止は、アプリを切り替えると外れるので、戻ってきたら付け直す
+document.addEventListener("visibilitychange",async()=>{ if(document.visibilityState==="visible" && running && navigator.wakeLock){ try{ wakeLock=await navigator.wakeLock.request("screen"); }catch(e){} } if(document.visibilityState==="visible") unlockAudio(); });
 $("startCam").onclick=startCamera; $("stop").onclick=stop;
 $("pickFile").onclick=()=>$("file").click();
 $("file").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) analyzeFile(f); };  // 同じ動画を続けて選べるように
 $("bodyCam").onclick=bodyCamera; $("bodyFileBtn").onclick=()=>$("bodyFile").click();
 $("bodyFile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) bodyFromFile(f); };
 showBase(); loadCamPrefs(); showSuggest();
+// くわしい設定(モード・利き手・解析の細かさ・声)を覚えておく。次に開いたときも同じ設定で始まる
+const KEEP_SETTINGS=["mode","hand","quality","vAmount","vRate"];
+try{ const st=JSON.parse(localStorage.getItem("settings")||"{}"); for(const k of KEEP_SETTINGS) if(st[k]!==undefined && [...$(k).options].some(o=>o.value===st[k])) $(k).value=st[k]; }catch(e){}
+const saveSettings=()=>{ try{ const st={}; for(const k of KEEP_SETTINGS) st[k]=$(k).value; localStorage.setItem("settings",JSON.stringify(st)); }catch(e){} };
+for(const k of KEEP_SETTINGS) $(k).addEventListener("change",saveSettings);
+$("vRate").addEventListener("change",()=>{ if("speechSynthesis" in window){ speechSynthesis.cancel(); speak("この速さで話します"); } });
 function applyPlace(){ const home=curPlace()==="home"; window.HOME_SWING=home; $("homeNote").style.display=home?"block":"none"; try{ localStorage.setItem("place",curPlace()); }catch(e){} }
 try{ const sp=localStorage.getItem("place"); if(sp) $("place").value=sp; }catch(e){}
 $("place").onchange=applyPlace; applyPlace();
